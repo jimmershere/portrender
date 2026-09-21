@@ -1,0 +1,35 @@
+name = "theme-board"
+title = "Theme / collection mood board"
+description = "One image with a 2x2 grid of directions for a new theme or drop — pick one, then render it properly."
+tags = ["theme", "exploration"]
+kind = "generate"
+subject = "none"
+size = "1536x1024"
+quality = "medium"
+background = "opaque"
+prompt = '''
+A 2x2 grid of four distinct design directions for a merch collection titled "{{theme}}", each cell labeled in the corner exactly "A", "B", "C", "D".
+Brand: {{brand.name}} — {{brand.voice}}. Base style: {{style}}. Palette: {{palette}}.
+A: {{dir_a}}
+B: {{dir_b}}
+C: {{dir_c}}
+D: {{dir_d}}
+Each cell is a complete self-contained tee graphic on a {{shirt_color}} swatch; thin gutters between cells; no other text.
+'''
+
+[vars.theme]
+required = true
+[vars.dir_a]
+default = "typographic, headline-only"
+[vars.dir_b]
+default = "mascot doing something on-theme"
+[vars.dir_c]
+default = "badge / roundel treatment"
+[vars.dir_d]
+default = "illustrated scene, no text"
+[vars.shirt_color]
+default = "black"
+[vars.style]
+default = "{{brand.style}}"
+[vars.palette]
+default = "{{brand.palette}}"

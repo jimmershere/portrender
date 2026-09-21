@@ -1,0 +1,40 @@
+name = "tee-graphic"
+title = "T-shirt graphic — single subject + headline"
+description = "Print-ready chest graphic: canvas → subject → style → composition → headline → avoid. The workhorse."
+tags = ["merch", "apparel", "tee"]
+kind = "generate"
+subject = "cartoon_mascot"
+size = "1024x1024"
+quality = "medium"
+background = "transparent"
+prompt = '''
+Print-ready t-shirt graphic, isolated on a transparent background (no shirt, no mockup, no frame), designed to sit on a {{shirt_color}} shirt.
+Subject: {{subject_desc}}
+Style: {{style}}. Brand voice: {{brand.voice}}.
+Palette: limit to {{palette}}.
+Composition: centered chest-print, {{single_subject}} generous negative space, crisp edges suitable for screenprint or DTG at 4500px.
+{{#headline}}{{headline_block}} Placed {{headline_position}}.{{/headline}}
+{{^headline}}No text anywhere in the design.{{/headline}}
+{{#extra}}{{extra}}{{/extra}}
+'''
+
+[vars.subject_desc]
+required = true
+help = "one line describing the focal illustration, e.g. 'a smug cartoon hen in tie-dye overalls holding a jar of jam'"
+[vars.headline]
+default = ""
+help = "exact words to render (leave blank for no text)"
+[vars.headline_position]
+default = "above the subject"
+help = "above the subject | below the subject | arched over the top | stacked beside"
+[vars.headline_type]
+default = "tall bold uppercase sans-serif lettering"
+[vars.shirt_color]
+default = "black"
+[vars.style]
+default = "{{brand.style}}"
+[vars.palette]
+default = "{{brand.palette}}"
+[vars.extra]
+default = ""
+help = "any extra direction"

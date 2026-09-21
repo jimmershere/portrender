@@ -1,0 +1,27 @@
+name = "mug-wrap"
+title = "Mug wrap band"
+description = "Wide art for a wrap-around mug print; keeps the bottom 10% clear for text stamping in tee-empire."
+tags = ["merch", "drinkware", "mug"]
+kind = "generate"
+subject = "cartoon_mascot"
+size = "1536x1024"
+quality = "medium"
+background = "transparent"
+prompt = '''
+Wide wrap-around mug artwork isolated on a transparent background, landscape format.
+Subject: {{subject_desc}}
+Style: {{style}}. Palette: {{palette}}.
+Composition: the subject occupies the left two-thirds; {{#headline}}{{headline_block}} on the right third;{{/headline}} keep the bottom tenth of the canvas completely empty.
+{{single_subject}}
+'''
+
+[vars.subject_desc]
+required = true
+[vars.headline]
+default = ""
+[vars.headline_type]
+default = "bold rounded uppercase lettering"
+[vars.style]
+default = "{{brand.style}}"
+[vars.palette]
+default = "{{brand.palette}}"

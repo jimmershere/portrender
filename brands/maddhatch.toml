@@ -1,0 +1,33 @@
+# Madd Hatchery — maddhatchery.com  (repo: github.com/jimmershere/maddhatch)
+# Facts below come from the maddhatch README/site.css and tee-empire's
+# brands/madd_hatchery/brand.yaml. Edit freely; nothing here is secret.
+slug = "maddhatch"
+name = "Madd Hatchery"
+tagline = "small-batch jams · farm-fresh eggs · baby chicks · merch"
+location = "Hubert, NC"
+audience = "farm girls, market-day regulars, down-home folks who buy the joke and the jam"
+voice = "playful hippy-country farm humor from Trish's urban hatchery — warm, witty, a little sassy; barnyard puns, jam-and-egg jokes, tie-dye-and-overalls energy; wholesome, never crude"
+style = "bold cartoon sticker-style art with thick uniform outlines, bright flat color, subtle cel shading, country-girl-but-sleek"
+palette = ["#119aa0 teal (logo)", "#7a3f9d plum (logo)", "#e0922f amber (jam/honey)", "#c8603f terracotta", "#7c9367 sage", "#3f9e4d peacock green", "#e36a9a tie-dye pink", "#fbf6ec cream"]
+fonts = "Fraunces (display serif), Nunito Sans (body), Caveat (script accents)"
+products = ["jams & jellies", "farm-fresh eggs", "baby chicks", "tees", "mugs", "stickers", "bottles"]
+notes = "Node/Express + SQLite storefront with Stripe Checkout; merch page is data-driven. Mascot reference art lives in tee-empire brands/madd_hatchery/fixtures/."
+
+[mascot]
+name = "Trish"
+desc = "curly red hair, glasses, headset, tie-dye shirt and overalls; cheerful farm-girl energy"
+# reference image for edits / identity-locked renders — relative to brands/ or absolute
+ref = "/app/tee-empire/brands/madd_hatchery/fixtures/character.png"
+
+[lanes]
+house = ["Need Some Eggs?", "All Jammed Up", "Fresh From The Hatch"]
+novelty = ["Disco Possum", "Porch Goblin", "Yard Bird Union"]
+
+[links]
+site = "https://maddhatchery.com"
+repo = "https://github.com/jimmershere/maddhatch"
+
+[handoff]
+tee_empire_brand = "madd_hatchery"
+clemtock_theme = "madd_hatchery"
+clemtock_category = "mascots"

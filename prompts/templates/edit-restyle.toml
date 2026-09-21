@@ -1,0 +1,18 @@
+name = "edit-restyle"
+title = "Edit — restyle into a brand's look"
+description = "Keep the subject and layout; repaint in the selected brand style and palette."
+tags = ["edit", "brand"]
+kind = "edit"
+subject = "none"
+prompt = '''
+Repaint this image in the following style while keeping the same subject, pose and layout: {{style}}.
+Restrict colors to {{palette}}. Keep any text exactly as written.
+{{#extra}}{{extra}}{{/extra}}
+'''
+
+[vars.style]
+default = "{{brand.style}}"
+[vars.palette]
+default = "{{brand.palette}}"
+[vars.extra]
+default = ""

@@ -1,0 +1,27 @@
+name = "social-square"
+title = "Social still (square) for clemtock"
+description = "A finished square image for a feed post or a clemtock 'photo' scene."
+tags = ["social", "clemtock"]
+kind = "generate"
+subject = "none"
+size = "1024x1024"
+quality = "medium"
+background = "opaque"
+prompt = '''
+Square social-media still for {{brand.name}}.
+Scene: {{scene}}
+Style: {{style}}. Palette: {{palette}}. Mood: {{brand.voice}}.
+{{#headline}}{{headline_block}} Large, high contrast, leaves the lower fifth clear for a caption overlay.{{/headline}}
+{{^headline}}No text; leave the lower fifth uncluttered for a caption overlay.{{/headline}}
+'''
+
+[vars.scene]
+required = true
+[vars.headline]
+default = ""
+[vars.headline_type]
+default = "bold display lettering"
+[vars.style]
+default = "{{brand.style}}"
+[vars.palette]
+default = "{{brand.palette}}"

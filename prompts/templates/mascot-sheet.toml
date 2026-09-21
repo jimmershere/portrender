@@ -1,0 +1,34 @@
+name = "mascot-sheet"
+title = "Character / mascot model sheet"
+description = "Turnaround + expressions for a NEW character so later renders stay on-model. Use the best output as brand.mascot.ref."
+tags = ["character", "mascot", "reference"]
+kind = "generate"
+subject = "cartoon_mascot"
+size = "1536x1024"
+quality = "high"
+background = "opaque"
+prompt = '''
+Character model sheet on a flat {{sheet_bg}} background, clean production reference.
+Character: {{character_desc}}
+Name tag reads exactly: "{{name}}".
+Style: {{style}}. Palette: {{palette}}.
+Layout: left half — full-body front view, 3/4 view and side view standing on one baseline, same scale;
+right half — a 2x2 grid of head-and-shoulders expressions: {{expressions}}.
+Consistent proportions and costume in every view; simple flat color; no scene, no props except {{props}}.
+'''
+
+[vars.character_desc]
+required = true
+help = "species/body/costume/personality in one line"
+[vars.name]
+required = true
+[vars.expressions]
+default = "happy, smug, surprised, exhausted"
+[vars.props]
+default = "the signature item they always carry"
+[vars.sheet_bg]
+default = "light grey"
+[vars.style]
+default = "{{brand.style}}"
+[vars.palette]
+default = "{{brand.palette}}"

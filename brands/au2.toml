@@ -1,0 +1,34 @@
+# Appearance Unlimited — appearance-unlimited.com  (repo: github.com/jimmershere/au2)
+# Northern Michigan auto body, detailing & classic restoration, Traverse City MI.
+# Palette from au2 assets/css/style.css; designs from assets/data/products.json.
+slug = "au2"
+name = "Appearance Unlimited"
+tagline = "auto body · detailing · classic restoration — Traverse City, MI"
+location = "Traverse City, MI"
+audience = "gearheads, restoration customers, Northern Michigan car-show crowd"
+voice = "shop-floor honest, dry humor, motorsport swagger; the crew, the calipers, the panel gaps you could set a watch to"
+style = "1970s motorsport / garage aesthetic — chrome and red on near-black, Oswald-style condensed uppercase, airbrushed highlights, distressed screenprint texture"
+palette = ["#b8121b red", "#d81a24 red-bright", "#7d0d13 red-dark", "#f4f4f6 chrome-hi", "#b9bcc2 chrome-mid", "#7d8087 chrome-lo", "#0c0c0d ink", "#1a1a1d panel"]
+fonts = "Oswald (headings, condensed uppercase), Barlow (body)"
+products = ["tees (Bella+Canvas 3001, boxy tee 1382)", "accent mugs (635)", "stainless bottles (887)", "kiss-cut stickers (400)", "posters"]
+notes = "Merch masters are NOT kept in the au2 repo (only 520/1000w JPEG+WebP derivatives). Export target 'au2' drops masters into assets/img/merch/masters/ — gitignore them there. Existing designs: Panel Gaps Crew, TC Original, Garage Crew."
+
+[mascot]
+name = "the crew"
+desc = "no single mascot; recurring motifs are the AU car logo, calipers, the SS, a packed cooler and an open toolbox"
+ref = "/app/tee-empire/data/art/au2-logo-fun.png"
+
+[lanes]
+designs = ["Panel Gaps Crew — Panel gaps you could set a watch to.", "TC Original — Pretty doesn't mean soft.", "Garage Crew — Unf*ck. Paint. Restore. Repeat."]
+builds = ["Indy 500 truck", "pace car", "Iron Bay", "Northern Light", "Resurrection", "Yellowjacket"]
+
+[links]
+site = "https://appearance-unlimited.com"
+repo = "https://github.com/jimmershere/au2"
+phone = "+1-231-409-2395"
+
+[handoff]
+tee_empire_brand = "au2"          # no tee-empire brand yet — scaffold with scripts/onboard_brand.py
+clemtock_theme = "au2"
+clemtock_category = "logos"
+au2_masters = "assets/img/merch/masters"

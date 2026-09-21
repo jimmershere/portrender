@@ -1,0 +1,18 @@
+name = "edit-place-art"
+title = "Edit — place approved art onto a product shot"
+description = "Source = product shot; pass the approved art as --ref. Realistic print placement."
+tags = ["edit", "mockup", "social"]
+kind = "edit"
+subject = "product"
+input_fidelity = "high"
+prompt = '''
+Place the second image (the artwork) onto the print area of the product in the first image as a realistic {{print_method}} print: follow fabric folds and surface curvature, match lighting and slight ink texture, {{scale}} of the print area, {{position}}.
+Do not alter the artwork's colors, text or proportions. Keep the product, background and lighting unchanged.
+'''
+
+[vars.print_method]
+default = "screenprint"
+[vars.scale]
+default = "about 70% width"
+[vars.position]
+default = "centered on the chest"

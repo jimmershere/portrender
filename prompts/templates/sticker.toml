@@ -1,0 +1,33 @@
+name = "sticker"
+title = "Die-cut sticker"
+description = "Kiss-cut sticker art with a thick white contour border on transparent."
+tags = ["merch", "sticker"]
+kind = "generate"
+subject = "cartoon_mascot"
+size = "1024x1024"
+quality = "medium"
+background = "transparent"
+prompt = '''
+Die-cut vinyl sticker design isolated on a transparent background.
+Subject: {{subject_desc}}
+Style: {{style}}. Palette: {{palette}}.
+A thick uniform {{border_color}} contour border (about 4% of the width) hugs the silhouette; nothing outside the border.
+Composition: fills the frame, single subject, bold readable silhouette at 3 inches.
+{{#headline}}{{headline_block}} Integrated into the sticker shape.{{/headline}}
+{{#extra}}{{extra}}{{/extra}}
+'''
+
+[vars.subject_desc]
+required = true
+[vars.headline]
+default = ""
+[vars.headline_type]
+default = "chunky rounded uppercase lettering"
+[vars.border_color]
+default = "white"
+[vars.style]
+default = "{{brand.style}}"
+[vars.palette]
+default = "{{brand.palette}}"
+[vars.extra]
+default = ""

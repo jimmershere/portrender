@@ -1,0 +1,14 @@
+name = "edit-refine"
+title = "Edit — apply an instruction, preserve everything else"
+description = "The default edit. Give the change; typography, palette and composition are preserved."
+tags = ["edit"]
+kind = "edit"
+subject = "none"
+input_fidelity = "high"
+prompt = '''
+{{instruction}}
+Preserve the existing typography, palette and composition exactly. Change nothing else.
+'''
+
+[vars.instruction]
+required = true

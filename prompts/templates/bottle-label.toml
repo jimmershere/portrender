@@ -1,0 +1,28 @@
+name = "bottle-label"
+title = "Bottle / tall vertical art"
+description = "Portrait art for the stainless bottle (blueprint 887) or a tall sticker."
+tags = ["merch", "drinkware", "bottle"]
+kind = "generate"
+subject = "cartoon_mascot"
+size = "1024x1536"
+quality = "medium"
+background = "transparent"
+prompt = '''
+Tall vertical artwork isolated on a transparent background, portrait format, for a stainless water bottle.
+Subject: {{subject_desc}}
+Style: {{style}}. Palette: {{palette}}.
+Composition: stacked vertically — {{#headline}}{{headline_block}} at the top, {{/headline}}subject in the middle{{#footer}}, a small line reading exactly: "{{footer}}" at the bottom{{/footer}}. {{single_subject}}
+'''
+
+[vars.subject_desc]
+required = true
+[vars.headline]
+default = ""
+[vars.headline_type]
+default = "tall condensed uppercase lettering"
+[vars.footer]
+default = ""
+[vars.style]
+default = "{{brand.style}}"
+[vars.palette]
+default = "{{brand.palette}}"

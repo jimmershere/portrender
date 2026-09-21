@@ -1,0 +1,31 @@
+name = "product-shot"
+title = "Photoreal product shot (social / listing)"
+description = "A lifestyle or studio product render for ads and listings — pair with edit-place-art to put approved art on it."
+tags = ["social", "listing", "product"]
+kind = "generate"
+subject = "product"
+size = "1024x1024"
+quality = "high"
+background = "opaque"
+prompt = '''
+Photorealistic product photograph of {{product}} in {{setting}}.
+Lighting: {{lighting}}. Camera: {{camera}}.
+Brand mood: {{brand.voice}}. Color grade leaning {{palette}}.
+The print area of the product is a plain {{print_color}} blank (art will be added later). No text, no logos, no people unless stated: {{people}}.
+'''
+
+[vars.product]
+required = true
+help = "e.g. 'a black heavyweight t-shirt on a wooden hanger'"
+[vars.setting]
+default = "a softbox studio with a neutral seamless backdrop"
+[vars.lighting]
+default = "soft key from upper left, gentle rim light"
+[vars.camera]
+default = "85mm, f/5.6, straight-on, product fills 70% of frame"
+[vars.print_color]
+default = "black"
+[vars.people]
+default = "none"
+[vars.palette]
+default = "{{brand.palette}}"

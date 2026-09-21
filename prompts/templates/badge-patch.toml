@@ -1,0 +1,27 @@
+name = "badge-patch"
+title = "Circular badge / patch"
+description = "Roundel with ring text — hats, patches, mugs, tee left-chest."
+tags = ["merch", "badge", "patch"]
+kind = "generate"
+subject = "cartoon_mascot"
+size = "1024x1024"
+quality = "medium"
+background = "transparent"
+prompt = '''
+Circular badge / embroidered-patch design isolated on a transparent background, perfectly round outer edge.
+Center emblem: {{emblem}}
+Ring text around the top reads exactly: "{{top_text}}"{{#bottom_text}}; around the bottom reads exactly: "{{bottom_text}}"{{/bottom_text}}.
+Style: {{style}}; thick outer border ring, limited palette {{palette}}, embroidered thread look with clean stitch edges.
+Nothing outside the circle.
+'''
+
+[vars.emblem]
+required = true
+[vars.top_text]
+required = true
+[vars.bottom_text]
+default = ""
+[vars.style]
+default = "{{brand.style}}"
+[vars.palette]
+default = "{{brand.palette}}"

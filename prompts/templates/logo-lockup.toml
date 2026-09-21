@@ -1,0 +1,30 @@
+name = "logo-lockup"
+title = "Logo / wordmark lockup"
+description = "Brand mark + wordmark on transparent; vector-clean so it survives a 1-color print."
+tags = ["brand", "logo"]
+kind = "generate"
+subject = "typography_only"
+size = "1024x1024"
+quality = "high"
+background = "transparent"
+prompt = '''
+Flat vector-style logo lockup isolated on a transparent background.
+Wordmark reads exactly: "{{wordmark}}"{{#tagline}} with a smaller line reading exactly: "{{tagline}}"{{/tagline}}.
+Mark: {{mark_desc}}.
+Style: {{style}}; {{colors}} colors maximum; solid fills, no gradients, no photo texture; must read at 1 inch and in a single color.
+Layout: {{layout}}.
+'''
+
+[vars.wordmark]
+required = true
+[vars.tagline]
+default = ""
+[vars.mark_desc]
+required = true
+help = "the symbol, e.g. 'a hen silhouette inside a jam-jar outline'"
+[vars.layout]
+default = "mark above the wordmark, centered"
+[vars.colors]
+default = "2"
+[vars.style]
+default = "{{brand.style}}"

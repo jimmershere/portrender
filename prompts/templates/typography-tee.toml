@@ -1,0 +1,41 @@
+name = "typography-tee"
+title = "Typography-only tee"
+description = "Text is the design. No characters, no faces, no objects unless named."
+tags = ["merch", "apparel", "tee", "text"]
+kind = "generate"
+subject = "typography_only"
+size = "1024x1024"
+quality = "medium"
+background = "transparent"
+prompt = '''
+Print-ready typographic t-shirt graphic isolated on a transparent background, designed for a {{shirt_color}} shirt.
+{{headline_block}}
+Lettering style: {{lettering}}.
+{{#subline}}A smaller second line reads exactly: "{{subline}}" underneath, same family, lighter weight.{{/subline}}
+Color: {{ink}} ink only{{#accent}} with {{accent}} as the single accent{{/accent}}.
+Composition: {{layout}}; balanced negative space; nothing else in the frame.
+Texture: {{texture}}.
+{{#extra}}{{extra}}{{/extra}}
+'''
+
+[vars.headline]
+required = true
+help = "the exact words"
+[vars.headline_type]
+default = "tall bold uppercase condensed sans-serif"
+[vars.subline]
+default = ""
+[vars.lettering]
+default = "hand-cut stencil / vintage varsity block, slightly irregular edges"
+[vars.ink]
+default = "white"
+[vars.accent]
+default = ""
+[vars.layout]
+default = "stacked, left-aligned, three tight lines"
+[vars.texture]
+default = "subtle screenprint ink-bleed distress"
+[vars.shirt_color]
+default = "black"
+[vars.extra]
+default = ""

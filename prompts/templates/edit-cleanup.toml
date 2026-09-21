@@ -1,0 +1,17 @@
+name = "edit-cleanup"
+title = "Edit — fix anatomy / text / stray marks"
+description = "Fix the classic failure modes without changing the design."
+tags = ["edit", "fix"]
+kind = "edit"
+subject = "none"
+input_fidelity = "high"
+prompt = '''
+Fix only these defects and nothing else: {{defects}}.
+{{#headline}}The text must read exactly: "{{headline}}".{{/headline}}
+Keep the subject, style, palette and composition identical. Remove any watermark, signature or stray caption.
+'''
+
+[vars.defects]
+default = "extra or fused fingers, wrong limb count, mirrored or doubled facial features, misspelled or garbled lettering"
+[vars.headline]
+default = ""

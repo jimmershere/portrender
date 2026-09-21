@@ -1,0 +1,33 @@
+name = "poster"
+title = "Poster (11x14 portrait)"
+description = "Full-bleed poster art; text optional."
+tags = ["merch", "poster", "print"]
+kind = "generate"
+subject = "none"
+size = "1024x1536"
+quality = "high"
+background = "opaque"
+prompt = '''
+Full-bleed poster illustration, portrait 11x14 proportions, printable art.
+Scene: {{scene}}
+Style: {{style}}. Palette: {{palette}}. Mood: {{mood}}.
+{{#headline}}{{headline_block}} Integrated into the composition, {{headline_position}}.{{/headline}}
+Composition: {{composition}}.
+'''
+
+[vars.scene]
+required = true
+[vars.mood]
+default = "{{brand.voice}}"
+[vars.headline]
+default = ""
+[vars.headline_position]
+default = "in the lower third"
+[vars.headline_type]
+default = "bold poster lettering"
+[vars.composition]
+default = "single strong focal point, rule of thirds, room for the headline"
+[vars.style]
+default = "{{brand.style}}"
+[vars.palette]
+default = "{{brand.palette}}"

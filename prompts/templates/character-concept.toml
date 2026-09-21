@@ -1,0 +1,28 @@
+name = "character-concept"
+title = "Character concept (hero pose)"
+description = "One hero illustration of a new or existing character in a brand's style. Good first step before mascot-sheet."
+tags = ["character", "mascot"]
+kind = "generate"
+subject = "cartoon_mascot"
+size = "1024x1024"
+quality = "medium"
+background = "transparent"
+prompt = '''
+Hero illustration of a single character isolated on a transparent background.
+Character: {{character_desc}}
+Pose and attitude: {{pose}}.
+Style: {{style}}. Palette: {{palette}}. Brand voice: {{brand.voice}}.
+Composition: full body, centered, {{single_subject}} clean silhouette.
+{{#extra}}{{extra}}{{/extra}}
+'''
+
+[vars.character_desc]
+required = true
+[vars.pose]
+default = "confident three-quarter stance, looking at the viewer"
+[vars.style]
+default = "{{brand.style}}"
+[vars.palette]
+default = "{{brand.palette}}"
+[vars.extra]
+default = ""

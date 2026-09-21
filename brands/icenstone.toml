@@ -1,0 +1,31 @@
+# Ice and Stone — icenstone.grok.me (site under construction; returned 403 on 2026-09-21,
+# so nothing below is taken from the site). Direction is jimmer's own brief for the
+# Northern Michigan / Up North underdog line. Refine as the brand locks down.
+slug = "icenstone"
+name = "Ice and Stone"
+tagline = "built in ice and stone — Northern Michigan, Up North, the U.P."
+location = "Traverse City, MI"
+audience = "Northern Michiganders and Yoopers — residents, seasonal returners, expats who still say 'up north'"
+voice = "defiant, hardscrabble, cold-forged; terse declaratives, no cute puns; Michigan-vs-all-y'all underdog pride without naming any existing 'vs everybody' brand"
+style = "stark monochrome with a single ice-blue accent, hard edges, weathered stone and hammered-metal texture, hand-cut stencil lettering, heavy distressed screenprint"
+palette = ["#0b1018 ink", "#e9eef2 bone white", "#7fc8e8 ice blue (single accent)", "#4a5560 slate", "#2b2f36 wet stone"]
+fonts = "condensed grotesque or stencil uppercase; no scripts"
+products = ["heavyweight tees", "hoodies", "beanies", "stickers", "enamel mugs"]
+notes = "Trademark/licensing caution: no university marks, team names or logos; place names only (NMM-8). Brand still being locked down (domains, USPTO)."
+
+[mascot]
+name = "none"
+desc = "no mascot — motifs are the Mitten/U.P. silhouettes, ice shelves, Petoskey stone, split firewood, frozen bay, lighthouse"
+ref = ""
+
+[lanes]
+house = ["Built In Ice And Stone", "Up North Or Nothing", "Cold-Forged", "Lake Effect Bred", "45th Parallel"]
+places = ["Traverse City", "TVC", "Leelanau", "Old Mission", "Grand Traverse Bay", "Sleeping Bear", "U.P."]
+
+[links]
+site = "https://icenstone.grok.me"
+
+[handoff]
+tee_empire_brand = "icenstone"    # not yet a tee-empire brand — scaffold with scripts/onboard_brand.py
+clemtock_theme = "icenstone"
+clemtock_category = "logos"

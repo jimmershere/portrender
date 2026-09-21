@@ -1,0 +1,26 @@
+# Earl Biggers — the live Etsy-linked Printify shop (27415408, "EarlBiggersDammit").
+# From tee-empire brands/earl_biggers/brand.yaml.
+slug = "earl_biggers"
+name = "Earl Biggers"
+tagline = "adult-humor merch with a deadpan grin"
+audience = "late-night scrollers who buy the joke, not the explanation"
+voice = "adult-humor, bar-room confidence; punchy typographic copy with a deadpan grin; marketplace-safe edge — suggestive but not slur-laden"
+style = "vintage screenprint, 2-color, hand-drawn cartoon line art, subtle distress; typography-forward"
+palette = ["black", "vintage black", "navy", "army", "heather dark gray"]
+products = ["tees (Bella+Canvas 3001)", "15oz mugs", "4in stickers", "11x14 posters"]
+
+[mascot]
+name = "Earl"
+desc = "grumpy middle-aged everyman, cartoon line art; optional"
+ref = ""
+
+[lanes]
+force_multipliers = ["10×*", "0xDEADBEEF*", "PEBKAC*"]
+biggers = ["brand wordplay", "ironic anger", "burnout grit", "deadpan"]
+brocode = ["bro / dad-bro tropes"]
+fellowship = ["squad / found-family"]
+
+[handoff]
+tee_empire_brand = "earl_biggers"
+clemtock_theme = "earl_biggers"
+clemtock_category = "mascots"
