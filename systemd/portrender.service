@@ -1,0 +1,16 @@
+# systemd user unit template — filled in by scripts/install-user-service.sh
+[Unit]
+Description=portrender web UI + API (Portwright image render/review)
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=@ROOT@
+# .env is read by the app itself (PORTRENDER_ENV_FILES); nothing secret lives in this unit.
+ExecStart=@PYTHON@ -m portrender serve --host @HOST@ --port @PORT@
+Restart=on-failure
+RestartSec=3
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target
