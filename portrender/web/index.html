@@ -1,0 +1,955 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>portrender</title>
+<style>
+:root {
+  --ink: #0B1018; --panel: #111826; --panel2: #161f30; --line: #22304a; --line2: #2d3d5c;
+  --text: #E6EBF2; --muted: #8A96A8; --dim: #5c6a80;
+  --lime: #A6E84A; --lime-ink: #0B1018; --orange: #EF6A28; --red: #ff5f56; --gold: #f5c542; --blue: #5fb3ff;
+  --radius: 6px; --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--ink); color: var(--text); font: 13px/1.4 var(--sans); }
+body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+a { color: var(--blue); }
+button, input, select, textarea { font: inherit; color: var(--text); background: var(--panel2); border: 1px solid var(--line); border-radius: var(--radius); padding: 4px 7px; }
+input, select, textarea { width: 100%; }
+input:focus, select:focus, textarea:focus, button:focus-visible { outline: 1px solid var(--lime); outline-offset: 0; border-color: var(--lime); }
+textarea { resize: vertical; min-height: 54px; font-family: var(--sans); }
+button { cursor: pointer; white-space: nowrap; }
+button:hover { border-color: var(--line2); background: #1c273b; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button.primary { background: var(--lime); color: var(--lime-ink); border-color: var(--lime); font-weight: 600; }
+button.primary:hover { background: #b9f26a; }
+button.warn { background: var(--orange); color: #fff; border-color: var(--orange); font-weight: 600; }
+button.ghost { background: transparent; border-color: transparent; color: var(--muted); }
+button.ghost:hover { color: var(--text); border-color: var(--line); }
+button.sm { padding: 2px 6px; font-size: 12px; }
+kbd { font: 11px var(--mono); background: #1d2739; border: 1px solid var(--line2); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; color: var(--text); }
+label.f { display: block; margin: 6px 0 2px; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+label.f .req { color: var(--orange); }
+.row { display: flex; gap: 6px; align-items: center; }
+.row > * { flex: 1; min-width: 0; }
+.row > .fix { flex: 0 0 auto; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--mono); font-size: 12px; }
+.hidden { display: none !important; }
+
+/* top bar */
+#top { display: flex; align-items: center; gap: 12px; padding: 6px 12px; background: var(--panel); border-bottom: 1px solid var(--line); flex: 0 0 auto; }
+#top .logo { font-weight: 800; font-size: 16px; letter-spacing: .02em; color: var(--lime); }
+#top .logo span { color: var(--muted); font-weight: 400; font-size: 12px; margin-left: 6px; }
+#top .ind { font-size: 11px; padding: 2px 7px; border-radius: 10px; border: 1px solid var(--line); color: var(--muted); }
+#top .ind.ok { color: var(--lime); border-color: #3a5a1e; }
+#top .ind.bad { color: var(--red); border-color: #6a2b28; }
+#top .ind.dry { color: var(--orange); border-color: #6a3a1e; }
+#top .spacer { flex: 1; }
+#spend { font-family: var(--mono); font-size: 12px; color: var(--text); }
+#spend b { color: var(--lime); }
+#running-ind { color: var(--orange); font-size: 12px; }
+
+/* main */
+main { display: grid; grid-template-columns: 350px 1fr; flex: 1; min-height: 0; }
+#left { border-right: 1px solid var(--line); background: var(--panel); overflow-y: auto; padding: 10px 12px 30px; }
+#left h2, #center h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 10px 0 4px; }
+#left h2:first-child { margin-top: 0; }
+#left .box { border: 1px solid var(--line); border-radius: var(--radius); padding: 8px; margin-top: 8px; background: var(--ink); }
+#preview { font-family: var(--mono); font-size: 11.5px; white-space: pre-wrap; max-height: 220px; overflow: auto; color: var(--text); background: var(--ink); }
+#prompt-count { font-size: 11px; color: var(--dim); text-align: right; }
+#drop { border: 1px dashed var(--line2); border-radius: var(--radius); padding: 10px; text-align: center; color: var(--muted); cursor: pointer; margin-top: 6px; }
+#drop.over { border-color: var(--lime); color: var(--lime); }
+#refs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+#refs .ref { width: 96px; border: 1px solid var(--line); border-radius: var(--radius); padding: 4px; background: var(--ink); font-size: 11px; }
+#refs .ref img { width: 100%; height: 64px; object-fit: contain; background: var(--cb); display: block; border-radius: 3px; }
+#refs .ref .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); margin: 3px 0; }
+#refs .ref button { width: 100%; }
+
+#center { display: flex; flex-direction: column; min-height: 0; }
+#filters { display: flex; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; align-items: center; }
+#filters select, #filters input { width: auto; }
+#filters input[type=search] { flex: 1; min-width: 140px; }
+#filters label.chk { display: flex; align-items: center; gap: 4px; color: var(--muted); white-space: nowrap; }
+#filters label.chk input { width: auto; margin: 0; }
+#jobs { overflow-y: auto; padding: 10px 12px 60px; flex: 1; }
+#jobs .empty { color: var(--dim); text-align: center; padding: 40px; }
+
+/* job card */
+.job { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); margin-bottom: 10px; }
+.job.err { border-color: #6a2b28; }
+.job .hd { display: flex; align-items: center; gap: 8px; padding: 6px 10px; flex-wrap: wrap; border-bottom: 1px solid var(--line); }
+.job .hd .lbl { font-weight: 600; font-size: 13.5px; }
+.job .hd .id { font-family: var(--mono); font-size: 11px; color: var(--dim); }
+.job .hd .meta { color: var(--muted); font-size: 11.5px; font-family: var(--mono); }
+.job .hd .spacer { flex: 1; }
+.chip { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 10px; border: 1px solid var(--line2); color: var(--muted); }
+.chip.brand { color: var(--lime); border-color: #3a5a1e; }
+.badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; padding: 1px 7px; border-radius: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.badge.queued { background: #2a2f3d; color: var(--muted); }
+.badge.running { background: #4a2a12; color: var(--orange); }
+.badge.done { background: #263f12; color: var(--lime); }
+.badge.error { background: #4a1f1e; color: var(--red); }
+.spin { width: 10px; height: 10px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.job .errtxt { color: var(--red); font-family: var(--mono); font-size: 11.5px; padding: 6px 10px; white-space: pre-wrap; border-bottom: 1px solid var(--line); }
+.job .parent { font-size: 11px; color: var(--blue); cursor: pointer; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; padding: 8px 10px; }
+.grid .wait { color: var(--dim); font-size: 12px; padding: 4px 0; grid-column: 1/-1; }
+:root { --cb: repeating-conic-gradient(#1a2233 0 25%, #121826 0 50%) 0 0 / 16px 16px; }
+.im { position: relative; border: 2px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--cb); cursor: pointer; aspect-ratio: 1; }
+.im img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.im.approved { border-color: var(--lime); }
+.im.rejected { border-color: var(--orange); opacity: .55; }
+.im.focus { outline: 2px solid var(--lime); outline-offset: 2px; }
+.im .tag { position: absolute; font-size: 10px; font-family: var(--mono); padding: 1px 5px; border-radius: 3px; background: rgba(11,16,24,.8); }
+.im .tag.st { top: 4px; left: 4px; }
+.im .tag.star { top: 4px; right: 4px; color: var(--gold); }
+.im .tag.ex { bottom: 4px; left: 4px; color: var(--lime); }
+.im .tag.note { bottom: 4px; right: 4px; color: var(--blue); }
+.menu { position: relative; }
+.menu .dd { position: absolute; right: 0; top: 100%; z-index: 5; background: var(--panel2); border: 1px solid var(--line2); border-radius: var(--radius); min-width: 150px; padding: 4px; display: none; }
+.menu.open .dd { display: block; }
+.menu .dd button { display: block; width: 100%; text-align: left; background: transparent; border-color: transparent; }
+.menu .dd button:hover { background: #253451; }
+
+/* overlays */
+.overlay { position: fixed; inset: 0; background: rgba(5,8,14,.92); z-index: 50; display: flex; }
+#lb { flex-direction: column; }
+#lb .body { display: grid; grid-template-columns: 1fr 380px; flex: 1; min-height: 0; }
+#lb .view { position: relative; display: flex; align-items: center; justify-content: center; background: var(--cb); min-height: 0; }
+#lb .view img { max-width: 100%; max-height: 100%; object-fit: contain; }
+#lb .navb { position: absolute; top: 50%; transform: translateY(-50%); font-size: 22px; padding: 14px 8px; background: rgba(11,16,24,.6); border-color: transparent; }
+#lb .navb.l { left: 6px; } #lb .navb.r { right: 6px; }
+#lb .counter { position: absolute; top: 8px; left: 10px; font-family: var(--mono); font-size: 12px; background: rgba(11,16,24,.75); padding: 2px 8px; border-radius: 4px; }
+#lb .close { position: absolute; top: 8px; right: 10px; }
+#lb .side { background: var(--panel); border-left: 1px solid var(--line); overflow-y: auto; padding: 10px 12px 20px; display: flex; flex-direction: column; gap: 8px; }
+#lb .side h3 { margin: 0; font-size: 14px; }
+#lb .side .sub { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+#lb .acts { display: flex; flex-wrap: wrap; gap: 5px; }
+#lb .acts button { flex: 1 1 auto; }
+#lb .acts button.on { border-color: var(--lime); color: var(--lime); }
+#lb .acts button.on.x { border-color: var(--orange); color: var(--orange); }
+#lb .acts button.on.s { border-color: var(--gold); color: var(--gold); }
+#lb details { border: 1px solid var(--line); border-radius: var(--radius); padding: 4px 8px; }
+#lb details summary { cursor: pointer; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+#lb details pre { white-space: pre-wrap; font: 11.5px var(--mono); margin: 6px 0 2px; max-height: 240px; overflow: auto; }
+#lb .form { border: 1px solid var(--line2); border-radius: var(--radius); padding: 8px; background: var(--ink); }
+#lb .form h4 { margin: 0 0 4px; font-size: 12px; color: var(--lime); text-transform: uppercase; letter-spacing: .05em; }
+#lb .hints { flex: 0 0 auto; border-top: 1px solid var(--line); background: var(--panel); padding: 5px 12px; font-size: 11px; color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; }
+.targets { display: flex; gap: 5px; flex-wrap: wrap; }
+.targets button.on { background: var(--lime); color: var(--lime-ink); border-color: var(--lime); }
+.results { font: 11.5px var(--mono); }
+.results .r { border-top: 1px solid var(--line); padding: 5px 0; word-break: break-all; }
+.results .r .nx { color: var(--orange); }
+.exlist { font: 11px var(--mono); color: var(--lime); }
+.refpick { display: flex; flex-wrap: wrap; gap: 4px; max-height: 90px; overflow: auto; }
+.refpick label { display: flex; gap: 3px; align-items: center; font-size: 11px; border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+.refpick input { width: auto; margin: 0; }
+#help { align-items: center; justify-content: center; }
+#help .card { background: var(--panel); border: 1px solid var(--line2); border-radius: 8px; padding: 18px 22px; max-width: 560px; width: 92%; max-height: 90vh; overflow: auto; }
+#help table { border-collapse: collapse; width: 100%; }
+#help td { padding: 3px 6px; border-bottom: 1px solid var(--line); }
+#help td:first-child { white-space: nowrap; width: 110px; }
+
+/* toasts */
+#toasts { position: fixed; right: 12px; bottom: 12px; z-index: 100; display: flex; flex-direction: column; gap: 6px; max-width: 380px; }
+.toast { background: var(--panel2); border: 1px solid var(--line2); border-left: 3px solid var(--lime); padding: 8px 12px; border-radius: var(--radius); font-size: 12.5px; box-shadow: 0 6px 20px rgba(0,0,0,.5); animation: in .15s ease-out; }
+.toast.err { border-left-color: var(--red); }
+.toast.warn { border-left-color: var(--orange); }
+@keyframes in { from { transform: translateY(8px); opacity: 0; } }
+
+@media (max-width: 900px) {
+  main { grid-template-columns: 1fr; }
+  #left { display: none; position: fixed; inset: 41px 0 0 0; z-index: 20; }
+  body.show-left #left { display: block; }
+  #lb .body { grid-template-columns: 1fr; grid-template-rows: 45vh 1fr; }
+  #lb .side { border-left: 0; border-top: 1px solid var(--line); }
+  #lb .hints { display: none; }
+  #top .spend-lbl, #top .ver { display: none; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+}
+</style>
+</head>
+<body>
+<header id="top">
+  <span class="logo">portrender<span id="ver"></span></span>
+  <span id="ind-key" class="ind">api key ?</span>
+  <span id="ind-dry" class="ind dry hidden">dry-run</span>
+  <span id="running-ind" class="hidden"><span class="spin"></span> <span id="running-n"></span> running</span>
+  <span class="spacer"></span>
+  <span id="spend" title="running spend (estimate)"><span class="spend-lbl muted">spend </span><b>$0.00</b> <span class="muted">/ 0 imgs</span></span>
+  <button class="sm ghost" id="btn-refresh" title="refresh (Shift+R)">refresh</button>
+  <button class="sm ghost" id="btn-left" title="toggle render panel">render</button>
+  <button class="sm ghost" id="btn-help" title="keyboard help (?)">?</button>
+</header>
+
+<main>
+<aside id="left">
+  <h2>Render</h2>
+  <label class="f">Brand</label>
+  <select id="brand"></select>
+  <div id="brand-info" class="muted" style="font-size:11px;margin-top:2px"></div>
+  <label class="f">Template</label>
+  <select id="template"></select>
+  <div id="tpl-desc" class="muted" style="font-size:11px;margin-top:2px"></div>
+  <div id="vars"></div>
+  <label class="f" id="prompt-lbl">Prompt / extra direction <kbd>r</kbd></label>
+  <textarea id="prompt" rows="5" placeholder="Describe the artwork, or add direction on top of the template. Ctrl+Enter renders."></textarea>
+  <div id="subject-wrap">
+    <label class="f">Subject</label>
+    <select id="subject"></select>
+  </div>
+  <label class="f">Avoid (comma separated)</label>
+  <input id="avoid" placeholder="text, watermark, gradients">
+  <div class="row" style="margin-top:6px">
+    <div><label class="f">n</label><select id="n"></select></div>
+    <div><label class="f">Size</label><select id="size"></select></div>
+    <div><label class="f">Quality</label><select id="quality"></select></div>
+  </div>
+  <div class="row">
+    <div><label class="f">Model</label><select id="model"></select></div>
+    <div><label class="f">Background</label><select id="background"></select></div>
+  </div>
+  <label class="f">Label (optional)</label>
+  <input id="label" placeholder="short name for the job">
+  <div class="row" style="margin-top:8px">
+    <button id="btn-preview">Preview prompt</button>
+    <button id="btn-render" class="primary">Render</button>
+  </div>
+  <div class="box hidden" id="preview-box">
+    <div id="preview"></div>
+    <div id="prompt-count"></div>
+  </div>
+
+  <h2 style="margin-top:16px">Save as template</h2>
+  <div class="row">
+    <input id="tpl-name" placeholder="name (slug)">
+    <input id="tpl-title" placeholder="title">
+    <button class="fix" id="btn-save-tpl">Save</button>
+  </div>
+  <div class="muted" style="font-size:11px">Saves the free-form prompt above with the current params as defaults.</div>
+
+  <h2 style="margin-top:16px">Reference images</h2>
+  <div id="drop">drop images here or click to upload</div>
+  <input type="file" id="file" accept="image/*" multiple class="hidden">
+  <div id="refs"></div>
+</aside>
+
+<section id="center">
+  <div id="filters">
+    <select id="f-status"><option value="">any status</option><option>queued</option><option>running</option><option>done</option><option>error</option></select>
+    <select id="f-brand"><option value="">any brand</option></select>
+    <label class="chk"><input type="checkbox" id="f-pending"> pending only</label>
+    <label class="chk"><input type="checkbox" id="f-starred"> starred</label>
+    <input type="search" id="q" placeholder="search label / prompt / id  ( / )">
+    <span id="jobs-count" class="muted mono"></span>
+  </div>
+  <div id="jobs"><div class="empty">loading…</div></div>
+</section>
+</main>
+
+<div id="lb" class="overlay hidden">
+  <div class="body">
+    <div class="view">
+      <img id="lb-img" alt="">
+      <div class="counter" id="lb-counter"></div>
+      <button class="navb l" data-nav="-1" title="prev (k / ←)">‹</button>
+      <button class="navb r" data-nav="1" title="next (j / →)">›</button>
+      <button class="close sm" id="lb-close" title="close (Esc)">✕ Esc</button>
+    </div>
+    <div class="side">
+      <h3 id="lb-title"></h3>
+      <div class="sub" id="lb-sub"></div>
+      <div class="acts" id="lb-acts">
+        <button data-act="approve" id="b-approve">✓ approve <kbd>a</kbd></button>
+        <button data-act="reject" id="b-reject" class="x">✕ reject <kbd>x</kbd></button>
+        <button data-act="pending" id="b-pending">↺ pending <kbd>p</kbd></button>
+        <button data-act="toggle-star" id="b-star" class="s">★ star <kbd>s</kbd></button>
+      </div>
+      <div class="acts" id="lb-acts2">
+        <button id="b-edit">edit <kbd>e</kbd></button>
+        <button id="b-variants">variants <kbd>v</kbd></button>
+        <button id="b-export">export <kbd>t</kbd></button>
+      </div>
+      <div class="acts">
+        <a id="lb-dl" download class="fix" style="flex:1"><button style="width:100%">⤓ download</button></a>
+        <button id="b-copy">copy path</button>
+        <button id="b-rerun" class="hidden">rerun</button>
+      </div>
+      <div id="lb-note-wrap">
+        <label class="f">Note <kbd>n</kbd> <span class="muted" style="text-transform:none">(Enter saves)</span></label>
+        <input id="lb-note" placeholder="why approved / what to fix…">
+      </div>
+      <div id="lb-exports" class="exlist"></div>
+      <div id="lb-revised" class="hidden"><label class="f">Revised prompt (from model)</label><div class="mono muted" id="lb-revised-txt" style="white-space:pre-wrap"></div></div>
+      <details id="lb-prompt-d"><summary>prompt</summary><pre id="lb-prompt"></pre></details>
+      <div id="lb-error" class="hidden" style="color:var(--red);font-family:var(--mono);font-size:11.5px;white-space:pre-wrap"></div>
+
+      <div class="form hidden" id="edit-form">
+        <h4>Edit this image</h4>
+        <label class="f">Instruction <span class="req">*</span></label>
+        <textarea id="ed-prompt" rows="3" placeholder="e.g. make the lettering bolder and remove the drop shadow. Ctrl+Enter submits."></textarea>
+        <div class="row">
+          <div><label class="f">n</label><select id="ed-n"></select></div>
+          <div><label class="f">Quality</label><select id="ed-quality"></select></div>
+          <div><label class="f">Fidelity</label><select id="ed-fidelity"><option>high</option><option>low</option></select></div>
+        </div>
+        <div class="row">
+          <div><label class="f">Size</label><select id="ed-size"></select></div>
+          <div><label class="f">Model</label><select id="ed-model"></select></div>
+        </div>
+        <label class="chk" style="display:flex;gap:6px;align-items:center;margin-top:6px"><input type="checkbox" id="ed-preserve" checked style="width:auto"> preserve palette / typography / composition</label>
+        <label class="f">Extra refs</label>
+        <div class="refpick" id="ed-refs"></div>
+        <div class="row" style="margin-top:8px"><button id="ed-cancel">cancel</button><button id="ed-go" class="primary">Run edit</button></div>
+      </div>
+
+      <div class="form hidden" id="ex-form">
+        <h4>Export</h4>
+        <div class="targets" id="ex-targets"></div>
+        <div id="ex-fields"></div>
+        <label class="f">Slug (optional)</label>
+        <input id="ex-slug" placeholder="defaults to job label">
+        <label class="chk" style="display:flex;gap:6px;align-items:center;margin-top:6px"><input type="checkbox" id="ex-force" style="width:auto"> overwrite existing</label>
+        <div class="row" style="margin-top:8px"><button id="ex-cancel">cancel</button><button id="ex-go" class="primary">Export</button></div>
+        <div class="results" id="ex-results"></div>
+      </div>
+    </div>
+  </div>
+  <div class="hints">
+    <span><kbd>j</kbd>/<kbd>k</kbd> img</span><span><kbd>J</kbd>/<kbd>K</kbd> job</span><span><kbd>a</kbd> approve</span><span><kbd>x</kbd> reject</span><span><kbd>p</kbd> pending</span><span><kbd>s</kbd> star</span><span><kbd>e</kbd> edit</span><span><kbd>v</kbd> variants</span><span><kbd>t</kbd> export</span><span><kbd>n</kbd> note</span><span><kbd>Esc</kbd> close</span><span><kbd>?</kbd> help</span>
+  </div>
+</div>
+
+<div id="help" class="overlay hidden">
+  <div class="card">
+    <h3 style="margin-top:0">Keyboard</h3>
+    <table>
+      <tr><td><kbd>j</kbd> <kbd>k</kbd> <kbd>←</kbd> <kbd>→</kbd></td><td>next / previous image (gallery focus or lightbox)</td></tr>
+      <tr><td><kbd>J</kbd> <kbd>K</kbd></td><td>next / previous job</td></tr>
+      <tr><td><kbd>Enter</kbd></td><td>open focused image in lightbox</td></tr>
+      <tr><td><kbd>a</kbd> <kbd>x</kbd> <kbd>p</kbd></td><td>approve / reject / back to pending (approve &amp; reject advance to next pending)</td></tr>
+      <tr><td><kbd>s</kbd></td><td>toggle star</td></tr>
+      <tr><td><kbd>e</kbd></td><td>edit (inline edit form)</td></tr>
+      <tr><td><kbd>v</kbd></td><td>variants: 4 fresh variations of the same subject/style/composition</td></tr>
+      <tr><td><kbd>t</kbd></td><td>export to tee-empire / clemtock / au2 / dir</td></tr>
+      <tr><td><kbd>n</kbd></td><td>focus note</td></tr>
+      <tr><td><kbd>/</kbd></td><td>focus search</td></tr>
+      <tr><td><kbd>r</kbd></td><td>focus render prompt</td></tr>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>Enter</kbd></td><td>submit (render / edit / note) from a text field</td></tr>
+      <tr><td><kbd>R</kbd></td><td>refresh jobs and spend</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>close dialog / lightbox, blur field</td></tr>
+      <tr><td><kbd>?</kbd></td><td>this help</td></tr>
+    </table>
+    <div style="text-align:right;margin-top:10px"><button id="help-close">close</button></div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+'use strict';
+// ------------------------------------------------------------------ state --
+const S = {
+  state: null, jobs: [], filters: { status: '', brand: '', pending: false, starred: false, q: '' },
+  focus: null,            // {job, idx} focused image in gallery
+  lb: null,               // {job, idx} or {ref} when lightbox open
+  autoOpen: new Set(),    // job ids started here; open first image when done
+  pollTimer: null, refreshing: false, prevRunning: new Set(),
+};
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const ls = { get(k) { try { return localStorage.getItem('pr.' + k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem('pr.' + k, v); } catch (e) { } } };
+
+async function api(path, body) {
+  const opts = body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+  const r = await fetch(path, opts);
+  let j = null;
+  try { j = await r.json(); } catch (e) { throw new Error(`${r.status} ${r.statusText}`); }
+  if (j && j.error) throw new Error(j.error);
+  if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+  return j;
+}
+function toast(msg, kind = 'ok', ms = 3500) {
+  const el = document.createElement('div');
+  el.className = 'toast ' + (kind === 'ok' ? '' : kind);
+  el.textContent = msg;
+  $('#toasts').appendChild(el);
+  setTimeout(() => el.remove(), kind === 'err' ? ms * 2 : ms);
+}
+const oops = e => { console.error(e); toast(e.message || String(e), 'err'); };
+function ago(iso) {
+  if (!iso) return '';
+  const t = new Date(iso).getTime(); if (isNaN(t)) return iso;
+  const d = Math.max(0, (Date.now() - t) / 1000);
+  if (d < 45) return 'just now';
+  if (d < 3600) return Math.round(d / 60) + 'm ago';
+  if (d < 86400) return Math.round(d / 3600) + 'h ago';
+  return Math.round(d / 86400) + 'd ago';
+}
+const usd = v => '$' + (Number(v) || 0).toFixed(v >= 10 ? 2 : 3);
+const fill = (sel, items, val, labelFn) => {
+  sel.innerHTML = items.map(x => { const v = typeof x === 'string' ? x : x.value, l = labelFn ? labelFn(x) : (typeof x === 'string' ? x : x.label); return `<option value="${esc(v)}">${esc(l)}</option>`; }).join('');
+  if (val != null && items.some(x => (typeof x === 'string' ? x : x.value) === val)) sel.value = val;
+};
+const imgNum = idx => String(idx + 1);
+const jobById = id => S.jobs.find(j => j.id === id);
+const tplByName = n => (S.state.templates || []).find(t => t.name === n);
+const isRunning = j => j.status === 'queued' || j.status === 'running';
+
+// ------------------------------------------------------------------ state --
+async function loadState(quiet) {
+  try {
+    const st = await api('/api/state');
+    const first = !S.state;
+    S.state = st;
+    renderTop();
+    if (first) { renderLeft(); renderFilters(); }
+    else { renderRefs(); }
+    return st;
+  } catch (e) { if (!quiet) oops(e); }
+}
+function renderTop() {
+  const st = S.state;
+  $('#ver').textContent = 'v' + (st.version || '?');
+  document.title = `portrender ${st.version || ''}`;
+  const k = $('#ind-key'); k.textContent = st.config.api_key_present ? 'api key ●' : 'api key MISSING';
+  k.className = 'ind ' + (st.config.api_key_present ? 'ok' : 'bad');
+  $('#ind-dry').classList.toggle('hidden', !st.dry_run);
+  const c = st.costs || {};
+  $('#spend').innerHTML = `<span class="spend-lbl muted">spend </span><b>${usd(c.usd_estimate || 0)}</b> <span class="muted">/ ${c.images || 0} imgs</span>`;
+  const by = c.by_brand || {};
+  $('#spend').title = 'estimate by brand: ' + (Object.keys(by).length ? Object.entries(by).map(([b, v]) => `${b} ${usd(typeof v === 'object' ? v.usd_estimate : v)}`).join(', ') : 'none');
+  const n = (st.running || []).length;
+  $('#running-ind').classList.toggle('hidden', !n); $('#running-n').textContent = n;
+}
+
+// ------------------------------------------------------------- left panel --
+function renderLeft() {
+  const st = S.state, cfg = st.config;
+  fill($('#brand'), [{ value: '', label: '— no brand —' }].concat(st.brands.map(b => ({ value: b.slug, label: b.name || b.slug }))), ls.get('brand'));
+  fill($('#template'), [{ value: '', label: 'free-form' }].concat(st.templates.map(t => ({ value: t.name, label: `${t.title || t.name}${t.kind === 'edit' ? ' (edit)' : ''}` }))), ls.get('template'));
+  fill($('#subject'), st.subjects || ['none']);
+  fill($('#n'), ['1', '2', '3', '4', '5', '6'], String(cfg.n || 2));
+  fill($('#size'), st.sizes, cfg.size); fill($('#quality'), st.qualities, cfg.quality);
+  fill($('#model'), st.models, cfg.model); fill($('#background'), st.backgrounds, cfg.background);
+  fill($('#ed-n'), ['1', '2', '3', '4', '5', '6'], '2'); fill($('#ed-quality'), st.qualities, cfg.quality);
+  fill($('#ed-size'), st.sizes, 'auto'); fill($('#ed-model'), st.models, cfg.edit_model || cfg.model);
+  onBrandChange(); onTemplateChange(); renderRefs();
+}
+function onBrandChange() {
+  const b = S.state.brands.find(x => x.slug === $('#brand').value);
+  ls.set('brand', $('#brand').value);
+  $('#brand-info').textContent = b ? [b.tagline, b.palette && b.palette.length ? 'palette: ' + b.palette.join(' ') : ''].filter(Boolean).join(' · ') : '';
+}
+function onTemplateChange() {
+  const t = tplByName($('#template').value); ls.set('template', $('#template').value);
+  $('#tpl-desc').textContent = t ? [t.description, (t.tags || []).length ? '#' + t.tags.join(' #') : ''].filter(Boolean).join(' · ') : '';
+  $('#subject-wrap').classList.toggle('hidden', !!t);
+  $('#prompt-lbl').firstChild.textContent = t ? 'Extra direction (appended) ' : 'Prompt ';
+  const v = $('#vars'); v.innerHTML = '';
+  if (t) {
+    const d = t.defaults || {}, cfg = S.state.config;
+    if (d.n) $('#n').value = String(d.n); if (d.size) $('#size').value = d.size; if (d.quality) $('#quality').value = d.quality;
+    if (d.model) $('#model').value = d.model; if (d.background) $('#background').value = d.background;
+    for (const [k, spec] of Object.entries(t.vars || {})) {
+      const s = spec || {}, big = /desc|prompt/i.test(k);
+      const lab = document.createElement('label'); lab.className = 'f'; lab.innerHTML = `${esc(k)}${s.required ? ' <span class="req">*</span>' : ''}`;
+      const inp = document.createElement(big ? 'textarea' : 'input');
+      inp.dataset.var = k; inp.placeholder = s.help || ''; inp.value = s.default || ''; if (big) inp.rows = 3;
+      v.appendChild(lab); v.appendChild(inp);
+    }
+  }
+}
+function collectVars() { const o = {}; $$('#vars [data-var]').forEach(i => { if (i.value !== '') o[i.dataset.var] = i.value; }); return o; }
+function renderBody() {
+  const t = $('#template').value;
+  const b = { prompt: $('#prompt').value.trim(), template: t || undefined, brand: $('#brand').value || undefined, vars: collectVars(), avoid: $('#avoid').value.trim() || undefined };
+  if (!t) b.subject = $('#subject').value;
+  return b;
+}
+function renderParams() { return { n: Number($('#n').value), size: $('#size').value, quality: $('#quality').value, model: $('#model').value, background: $('#background').value }; }
+async function previewPrompt() {
+  try {
+    const r = await api('/api/prompt', renderBody());
+    $('#preview-box').classList.remove('hidden');
+    $('#preview').textContent = r.prompt;
+    const p = r.params || {};
+    $('#prompt-count').textContent = `${r.prompt.length} chars · ${p.model || ''} ${p.size || ''} ${p.quality || ''} n=${p.n || ''}`;
+  } catch (e) { oops(e); }
+}
+async function doRender() {
+  const btn = $('#btn-render'); btn.disabled = true;
+  try {
+    const body = Object.assign(renderBody(), renderParams(), { label: $('#label').value.trim() || undefined });
+    const r = await api('/api/render', body);
+    started(r.job, `render queued: ${r.job.label}`);
+  } catch (e) { oops(e); } finally { btn.disabled = false; }
+}
+function started(job, msg) {
+  S.autoOpen.add(job.id); S.prevRunning.add(job.id);
+  S.jobs.unshift(job); renderJobs(); toast(msg); schedulePoll(true);
+  $('#jobs').scrollTop = 0;
+}
+async function saveTemplate() {
+  const name = $('#tpl-name').value.trim(), title = $('#tpl-title').value.trim();
+  if (!name) return toast('template name required', 'warn');
+  const prompt = $('#prompt').value.trim(); if (!prompt) return toast('write a free-form prompt first', 'warn');
+  const body = { name, title: title || name, prompt, kind: 'generate', subject: $('#subject').value, defaults: renderParams(), vars: {}, overwrite: false };
+  try {
+    let r;
+    try { r = await api('/api/templates', body); }
+    catch (e) { if (/exist/i.test(e.message) && confirm(`Template "${name}" exists. Overwrite?`)) { body.overwrite = true; r = await api('/api/templates', body); } else throw e; }
+    S.state.templates = r.templates; toast('saved template ' + name);
+    const cur = $('#template').value;
+    fill($('#template'), [{ value: '', label: 'free-form' }].concat(S.state.templates.map(t => ({ value: t.name, label: t.title || t.name }))), cur);
+  } catch (e) { oops(e); }
+}
+function renderRefs() {
+  const refs = S.state.refs || [];
+  $('#refs').innerHTML = refs.map(n => `<div class="ref"><img src="/refs/${encodeURIComponent(n)}" loading="lazy" alt=""><div class="nm" title="${esc(n)}">${esc(n)}</div><button class="sm" data-editref="${esc(n)}">edit from this</button></div>`).join('') || '<span class="muted" style="font-size:11px">no reference images yet</span>';
+  $('#ed-refs').innerHTML = refs.map(n => `<label><input type="checkbox" value="ref:${esc(n)}"> ${esc(n)}</label>`).join('') || '<span class="muted">none uploaded</span>';
+}
+async function uploadFiles(files) {
+  for (const f of files) {
+    try {
+      const data = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(f); });
+      const r = await api('/api/upload', { name: f.name, data_b64: data });
+      toast('uploaded ' + r.ref);
+    } catch (e) { oops(e); }
+  }
+  await loadState(true);
+}
+
+// ---------------------------------------------------------------- gallery --
+function renderFilters() {
+  fill($('#f-brand'), [{ value: '', label: 'any brand' }].concat(S.state.brands.map(b => ({ value: b.slug, label: b.name || b.slug }))), '');
+}
+function jobsQuery() {
+  const f = S.filters, p = new URLSearchParams();
+  if (f.status) p.set('status', f.status); if (f.brand) p.set('brand', f.brand);
+  if (f.pending) p.set('pending', '1'); if (f.starred) p.set('starred', '1'); if (f.q) p.set('q', f.q);
+  p.set('limit', '80');
+  return '/api/jobs?' + p.toString();
+}
+async function loadJobs(quiet) {
+  if (S.refreshing) return; S.refreshing = true;
+  try {
+    const rows = await api(jobsQuery());
+    rows.sort((a, b) => (b.created || '').localeCompare(a.created || ''));
+    // keep just-started jobs that the filter might not return yet
+    for (const j of S.jobs) if (S.autoOpen.has(j.id) && !rows.some(r => r.id === j.id)) rows.unshift(j);
+    S.jobs = rows;
+    renderJobs(); afterPoll();
+  } catch (e) { if (!quiet) oops(e); } finally { S.refreshing = false; }
+}
+function afterPoll() {
+  const nowRunning = new Set(S.jobs.filter(isRunning).map(j => j.id));
+  let finished = false;
+  for (const id of S.prevRunning) {
+    if (!nowRunning.has(id)) {
+      const j = jobById(id); finished = true;
+      if (j && j.status === 'done') { toast(`done: ${j.label} (${j.n} img)`); if (S.autoOpen.has(id) && j.images.length) openLightbox(id, 0); }
+      else if (j && j.status === 'error') toast(`error: ${j.label} — ${j.error || ''}`, 'err');
+      S.autoOpen.delete(id);
+    }
+  }
+  if (finished) loadState(true);
+  S.prevRunning = nowRunning;
+  if (S.lb && S.lb.job) lbRender();
+  schedulePoll();
+}
+function schedulePoll(force) {
+  const active = force || S.jobs.some(isRunning) || (S.state && (S.state.running || []).length);
+  clearTimeout(S.pollTimer);
+  if (active) S.pollTimer = setTimeout(() => loadJobs(true), 4000);
+}
+function jobCard(j) {
+  const st = j.status || 'queued', run = isRunning(j);
+  const parent = j.parent ? `<span class="parent" data-goto="${esc(j.parent.job)}" data-img="${esc(j.parent.image)}">↳ from ${esc(j.parent.job)}:${esc(j.parent.image)}</span>` : '';
+  const imgs = j.images.map((im, i) => {
+    const src = im.thumb ? `/files/${j.id}/${im.thumb}` : `/files/${j.id}/${im.file}`;
+    const fo = S.focus && S.focus.job === j.id && S.focus.idx === i ? ' focus' : '';
+    const ex = (im.exports || []).map(e => e.target).filter((v, k, a) => a.indexOf(v) === k);
+    return `<div class="im ${esc(im.status || 'pending')}${fo}" data-job="${esc(j.id)}" data-idx="${i}" title="${esc(im.file)} ${im.size_px ? im.size_px.join('×') : ''}">
+      <img src="${src}" loading="lazy" alt="">
+      <span class="tag st">${i + 1} ${im.status === 'approved' ? '✓' : im.status === 'rejected' ? '✕' : '·'}</span>
+      ${im.starred ? '<span class="tag star">★</span>' : ''}
+      ${ex.length ? `<span class="tag ex">→ ${esc(ex.join(', '))}</span>` : ''}
+      ${im.note ? '<span class="tag note" title="' + esc(im.note) + '">✎</span>' : ''}
+    </div>`;
+  }).join('');
+  return `<div class="job ${st === 'error' ? 'err' : ''}" data-jobcard="${esc(j.id)}">
+    <div class="hd">
+      <span class="lbl">${esc(j.label || j.id)}</span>
+      ${j.brand ? `<span class="chip brand">${esc(j.brand)}</span>` : ''}
+      <span class="badge ${st}">${run ? '<span class="spin"></span>' : ''}${st}</span>
+      ${j.kind === 'edit' ? '<span class="chip">edit</span>' : ''}
+      <span class="meta">${esc(j.model || '')} ${esc(j.size || '')} ${esc(j.quality || '')}${j.cost_estimate != null ? ' · ' + usd(j.cost_estimate) : ''}</span>
+      ${j.template ? `<span class="chip" title="template">${esc(j.template)}</span>` : ''}
+      ${parent}
+      <span class="spacer"></span>
+      <span class="meta" title="${esc(j.created)}">${ago(j.created)}</span>
+      <span class="id">${esc(j.id)}</span>
+      <span class="menu"><button class="sm ghost" data-menu="${esc(j.id)}">⋯</button><span class="dd">
+        <button data-jact="notes" data-job="${esc(j.id)}">notes / tags…</button>
+        <button data-jact="copyprompt" data-job="${esc(j.id)}">copy prompt</button>
+        <button data-jact="log" data-job="${esc(j.id)}">show log</button>
+        ${st === 'error' ? `<button data-jact="rerun" data-job="${esc(j.id)}">rerun</button>` : ''}
+        <button data-jact="delete" data-job="${esc(j.id)}" style="color:var(--red)">delete job</button>
+      </span></span>
+    </div>
+    ${j.error ? `<div class="errtxt">${esc(j.error)}</div>` : ''}
+    <div class="grid">${imgs || (run ? `<div class="wait"><span class="spin"></span> rendering ${j.n || ''}…</div>` : '<div class="wait">no images</div>')}</div>
+  </div>`;
+}
+function renderJobs() {
+  const el = $('#jobs');
+  const open = $$('.menu.open', el).map(m => $('[data-menu]', m).dataset.menu);
+  el.innerHTML = S.jobs.length ? S.jobs.map(jobCard).join('') : '<div class="empty">no jobs match</div>';
+  open.forEach(id => { const b = $(`[data-menu="${CSS.escape(id)}"]`, el); if (b) b.parentElement.classList.add('open'); });
+  $('#jobs-count').textContent = `${S.jobs.length} jobs · ${S.jobs.reduce((a, j) => a + j.images.length, 0)} imgs`;
+}
+function setFocus(job, idx, scroll) {
+  S.focus = { job, idx };
+  $$('.im.focus').forEach(e => e.classList.remove('focus'));
+  const el = $(`.im[data-job="${CSS.escape(job)}"][data-idx="${idx}"]`);
+  if (el) { el.classList.add('focus'); if (scroll) el.scrollIntoView({ block: 'nearest' }); }
+}
+function flat() { const out = []; S.jobs.forEach(j => j.images.forEach((im, i) => out.push({ job: j.id, idx: i }))); return out; }
+function flatPos(cur) { const f = flat(); return { f, i: cur ? f.findIndex(x => x.job === cur.job && x.idx === cur.idx) : -1 }; }
+function stepImage(cur, delta) {
+  const { f, i } = flatPos(cur); if (!f.length) return null;
+  return f[Math.min(f.length - 1, Math.max(0, (i < 0 ? (delta > 0 ? -1 : 0) : i) + delta))];
+}
+function stepJob(cur, delta) {
+  if (!S.jobs.length) return null;
+  let ji = cur ? S.jobs.findIndex(j => j.id === cur.job) : -1;
+  for (let k = 0; k < S.jobs.length; k++) {
+    ji = Math.min(S.jobs.length - 1, Math.max(0, ji + delta));
+    if (S.jobs[ji].images.length) return { job: S.jobs[ji].id, idx: 0 };
+    if (ji === 0 || ji === S.jobs.length - 1) break;
+  }
+  return null;
+}
+
+// ------------------------------------------------------------- job actions --
+async function jobAction(act, id) {
+  const j = jobById(id); if (!j) return;
+  try {
+    if (act === 'delete') {
+      if (!confirm(`Delete job ${id} (${j.label}) and its images?`)) return;
+      await api('/api/delete', { jobs: [id] }); S.jobs = S.jobs.filter(x => x.id !== id);
+      if (S.lb && S.lb.job === id) closeLightbox();
+      renderJobs(); toast('deleted ' + id); loadState(true);
+    } else if (act === 'rerun') {
+      const r = await api('/api/rerun', { job: id }); replaceJob(r.job); S.autoOpen.add(id); S.prevRunning.add(id); toast('rerun queued'); schedulePoll(true);
+    } else if (act === 'notes') {
+      const full = await api('/api/jobs/' + id);
+      const notes = prompt('Job notes:', full.notes || ''); if (notes === null) return;
+      const tags = prompt('Tags (comma separated):', (full.tags || []).join(', ')); if (tags === null) return;
+      const r = await api('/api/notes', { job: id, notes, tags: tags.split(',').map(s => s.trim()).filter(Boolean) });
+      replaceJob(r.job); toast('notes saved');
+    } else if (act === 'copyprompt') {
+      await copy(j.prompt || '');
+    } else if (act === 'log') {
+      const r = await api(`/api/jobs/${id}/log?n=80`);
+      alert(`${id}${r.running ? ' (running)' : ''}\n\n${r.log || '(empty log)'}`);
+    }
+  } catch (e) { oops(e); }
+}
+function replaceJob(job) { const i = S.jobs.findIndex(x => x.id === job.id); if (i >= 0) S.jobs[i] = job; else S.jobs.unshift(job); renderJobs(); if (S.lb && S.lb.job === job.id) lbRender(); }
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); toast('copied'); }
+  catch (e) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); toast('copied'); } catch (e2) { toast('copy failed', 'err'); } ta.remove(); }
+}
+
+// ------------------------------------------------------------------ review --
+async function review(job, idx, action, note) {
+  const j = jobById(job); if (!j) return;
+  const im = j.images[idx]; if (!im) return;
+  const before = Object.assign({}, im);
+  // optimistic
+  if (action === 'approve' || action === 'reject' || action === 'pending') im.status = { approve: 'approved', reject: 'rejected', pending: 'pending' }[action];
+  if (action === 'toggle-star') im.starred = !im.starred;
+  if (action === 'star') im.starred = true; if (action === 'unstar') im.starred = false;
+  if (action === 'note') im.note = note || '';
+  if (action === 'reset') { im.status = 'pending'; im.starred = false; im.note = ''; }
+  renderJobs(); if (S.lb && S.lb.job === job) lbRender();
+  try {
+    // server vocabulary is the status name itself (approved/rejected/pending), not the verb
+    const body = { job, image: im.file, action: { approve: 'approved', reject: 'rejected' }[action] || action };
+    if (note !== undefined) body.note = note;
+    const r = await api('/api/review', body); replaceJob(r.job);
+    if (action === 'approve' || action === 'reject') advancePending(job, idx);
+  } catch (e) { Object.assign(im, before); renderJobs(); if (S.lb) lbRender(); oops(e); }
+}
+function advancePending(job, idx) {
+  const { f, i } = flatPos({ job, idx });
+  const order = f.slice(i + 1).concat(f.slice(0, i));
+  const nxt = order.find(x => { const jj = jobById(x.job); return jj && jj.images[x.idx].status === 'pending'; });
+  if (!nxt) { toast('no more pending images', 'warn', 1500); return; }
+  if (S.lb) openLightbox(nxt.job, nxt.idx); else setFocus(nxt.job, nxt.idx, true);
+}
+
+// ---------------------------------------------------------------- lightbox --
+function openLightbox(job, idx) {
+  S.lb = { job, idx }; setFocus(job, idx, true);
+  $('#edit-form').classList.add('hidden'); $('#ex-form').classList.add('hidden');
+  $('#lb').classList.remove('hidden'); lbRender();
+}
+function openRefLightbox(name) {
+  S.lb = { ref: name }; $('#lb').classList.remove('hidden'); lbRender(); showEdit(true);
+}
+function closeLightbox() { S.lb = null; $('#lb').classList.add('hidden'); }
+function lbCur() { if (!S.lb || !S.lb.job) return null; const j = jobById(S.lb.job); if (!j) return null; const im = j.images[S.lb.idx]; return im ? { j, im } : null; }
+function lbRender() {
+  if (!S.lb) return;
+  const refMode = !!S.lb.ref;
+  ['#lb-acts', '#lb-acts2', '#lb-note-wrap', '#lb-prompt-d'].forEach(s => $(s).classList.toggle('hidden', refMode));
+  $('#b-rerun').classList.add('hidden'); $('#lb-error').classList.add('hidden'); $('#lb-revised').classList.add('hidden');
+  if (refMode) {
+    const src = `/refs/${encodeURIComponent(S.lb.ref)}`;
+    $('#lb-img').src = src; $('#lb-counter').textContent = 'reference'; $('#lb-title').textContent = S.lb.ref;
+    $('#lb-sub').textContent = 'uploaded reference image — run an edit from it'; $('#lb-dl').href = src; $('#lb-exports').innerHTML = '';
+    return;
+  }
+  const j = jobById(S.lb.job); if (!j) return closeLightbox();
+  const im = j.images[S.lb.idx];
+  const { f, i } = flatPos(S.lb);
+  $('#lb-counter').textContent = `${S.lb.idx + 1}/${j.images.length} · job ${S.jobs.findIndex(x => x.id === j.id) + 1}/${S.jobs.length} · ${i + 1}/${f.length} overall`;
+  $('#lb-title').textContent = j.label || j.id;
+  const brand = j.brand ? ` · ${j.brand}` : '';
+  $('#lb-sub').textContent = `${j.id}${brand} · ${j.status} · ${j.model || ''} ${j.size || ''} ${j.quality || ''} · ${ago(j.created)}${j.template ? ' · tpl ' + j.template : ''}${j.parent ? ' · from ' + j.parent.job + ':' + j.parent.image : ''}`;
+  $('#lb-prompt').textContent = j.prompt || '';
+  if (j.error) { $('#lb-error').textContent = j.error; $('#lb-error').classList.remove('hidden'); }
+  if (j.status === 'error') $('#b-rerun').classList.remove('hidden');
+  if (!im) {
+    $('#lb-img').removeAttribute('src'); $('#lb-dl').removeAttribute('href'); $('#lb-exports').innerHTML = '';
+    $('#lb-acts').classList.add('hidden'); $('#lb-note-wrap').classList.add('hidden');
+    $('#lb-title').textContent += isRunning(j) ? ' — rendering…' : ' — no images'; return;
+  }
+  const src = `/files/${j.id}/${im.file}`;
+  if ($('#lb-img').getAttribute('src') !== src) $('#lb-img').src = src;
+  $('#lb-dl').href = src; $('#lb-dl').setAttribute('download', `${j.id}-${im.file}`);
+  $('#b-approve').classList.toggle('on', im.status === 'approved');
+  $('#b-reject').classList.toggle('on', im.status === 'rejected');
+  $('#b-pending').classList.toggle('on', im.status === 'pending');
+  $('#b-star').classList.toggle('on', !!im.starred); $('#b-star').innerHTML = `${im.starred ? '★ starred' : '☆ star'} <kbd>s</kbd>`;
+  if (document.activeElement !== $('#lb-note')) $('#lb-note').value = im.note || '';
+  $('#lb-exports').innerHTML = (im.exports || []).map(e => `→ ${esc(e.target)} <span class="muted">${esc(e.path || '')} ${esc(ago(e.at))}</span>`).join('<br>');
+  if (im.revised_prompt) { $('#lb-revised-txt').textContent = im.revised_prompt; $('#lb-revised').classList.remove('hidden'); }
+  $('#lb-title').textContent += ` — ${im.file}${im.size_px ? ' ' + im.size_px.join('×') : ''}${im.bytes ? ' ' + Math.round(im.bytes / 1024) + 'K' : ''}`;
+  setFocus(j.id, S.lb.idx, false);
+}
+function lbNav(delta) { const n = stepImage(S.lb, delta); if (n && (n.job !== S.lb.job || n.idx !== S.lb.idx)) openLightbox(n.job, n.idx); }
+function lbNavJob(delta) { const n = stepJob(S.lb, delta); if (n) openLightbox(n.job, n.idx); }
+
+// -------------------------------------------------------------------- edit --
+function showEdit(on) {
+  $('#ex-form').classList.add('hidden');
+  const f = $('#edit-form'); f.classList.toggle('hidden', !on);
+  if (on) {
+    const cur = lbCur();
+    if (cur) { $('#ed-quality').value = cur.j.quality && S.state.qualities.includes(cur.j.quality) ? cur.j.quality : S.state.config.quality; }
+    $$('#ed-refs input').forEach(c => { c.checked = false; if (S.lb && S.lb.ref) c.disabled = c.value === 'ref:' + S.lb.ref; });
+    $('#ed-prompt').focus();
+  }
+}
+function editSource() {
+  if (!S.lb) return null;
+  if (S.lb.ref) return 'ref:' + S.lb.ref;
+  return `${S.lb.job}:${imgNum(S.lb.idx)}`;
+}
+async function submitEdit(opts) {
+  const source = editSource(); if (!source) return;
+  const cur = lbCur();
+  const body = Object.assign({
+    source, prompt: $('#ed-prompt').value.trim(), n: Number($('#ed-n').value), quality: $('#ed-quality').value,
+    size: $('#ed-size').value, model: $('#ed-model').value, fidelity: $('#ed-fidelity').value,
+    no_preserve: !$('#ed-preserve').checked, refs: $$('#ed-refs input:checked').map(c => c.value),
+    brand: cur ? cur.j.brand || undefined : ($('#brand').value || undefined),
+  }, opts || {});
+  if (!body.prompt) return toast('instruction required', 'warn');
+  $('#ed-go').disabled = true;
+  try {
+    const r = await api('/api/edit', body);
+    $('#edit-form').classList.add('hidden'); $('#ed-prompt').value = '';
+    started(r.job, `${opts ? 'variants' : 'edit'} queued: ${r.job.label}`);
+  } catch (e) { oops(e); } finally { $('#ed-go').disabled = false; }
+}
+function variants() {
+  if (!S.lb) return;
+  $('#ed-prompt').value = 'Make a fresh variation with the same subject, style and composition';
+  submitEdit({ n: 4, no_preserve: false, label: undefined });
+}
+
+// ------------------------------------------------------------------ export --
+const EX_FIELDS = {
+  'tee-empire': `<label class="f">Text (printed with the art)</label><input id="ex-text" placeholder="optional slogan / text">
+    <label class="f">Placement</label><select id="ex-placement"><option>back</option><option>underneath</option><option>left_sleeve</option><option>right_sleeve</option><option>neck</option></select>
+    <div class="row"><div><label class="f">Font</label><input id="ex-font" placeholder="bold_sans"></div><div><label class="f">Color</label><input id="ex-color" placeholder="white"></div></div>
+    <label class="f">Prompt note (optional)</label><input id="ex-prompt" placeholder="carried into the sidecar">`,
+  'clemtock': `<label class="f">Category</label><select id="ex-category"><option>logos</option><option>mascots</option><option>characters</option><option>creatures</option><option>uploads</option></select>`,
+  'au2': `<div class="muted" style="font-size:11px;margin-top:6px">no options — drops into the au2 merch source tree</div>`,
+  'dir': `<label class="f">Directory <span class="req">*</span></label><input id="ex-dir" placeholder="/absolute/path/on/this/host">`,
+};
+let exTarget = null;
+function showExport(on) {
+  $('#edit-form').classList.add('hidden');
+  const f = $('#ex-form'); f.classList.toggle('hidden', !on);
+  if (!on) return;
+  const av = S.state.export_targets || {};
+  $('#ex-targets').innerHTML = ['tee-empire', 'clemtock', 'au2', 'dir'].map(t => `<button class="sm" data-ex="${t}" ${av[t] ? '' : 'disabled title="not available on this host"'}>${t}</button>`).join('');
+  $('#ex-results').innerHTML = '';
+  const cur = lbCur(); if (cur) $('#ex-slug').placeholder = cur.j.label || 'slug';
+  const first = ['tee-empire', 'clemtock', 'au2', 'dir'].find(t => av[t]);
+  pickTarget(exTarget && av[exTarget] ? exTarget : first);
+}
+function pickTarget(t) {
+  exTarget = t;
+  $$('#ex-targets button').forEach(b => b.classList.toggle('on', b.dataset.ex === t));
+  $('#ex-fields').innerHTML = t ? EX_FIELDS[t] : '<div class="muted">no export targets configured</div>';
+}
+async function submitExport() {
+  const cur = lbCur(); if (!cur || !exTarget) return;
+  const v = id => { const e = $(id); return e ? e.value.trim() : ''; };
+  const body = { job: cur.j.id, images: [imgNum(S.lb.idx)], to: exTarget, slug: v('#ex-slug') || undefined, force: $('#ex-force').checked };
+  if (exTarget === 'tee-empire') Object.assign(body, { text: v('#ex-text'), placement: v('#ex-placement') || 'back', font: v('#ex-font') || undefined, color: v('#ex-color') || undefined, prompt: v('#ex-prompt') || undefined });
+  if (exTarget === 'clemtock') body.category = v('#ex-category') || 'mascots';
+  if (exTarget === 'dir') { body.dir = v('#ex-dir'); if (!body.dir) return toast('directory required', 'warn'); }
+  $('#ex-go').disabled = true;
+  try {
+    const r = await api('/api/export', body); replaceJob(r.job);
+    $('#ex-results').innerHTML = (r.results || []).map(x => `<div class="r"><b>${esc(x.target)}</b> ${esc(x.image || '')} <button class="sm" data-copy="${esc(x.image || '')}">copy</button>${x.sidecar ? `<br>sidecar ${esc(x.sidecar)}` : ''}${x.next ? `<br><span class="nx">next: ${esc(x.next)}</span>` : ''}</div>`).join('') || '<div class="r muted">no results</div>';
+    toast(`exported → ${exTarget}`);
+  } catch (e) { oops(e); } finally { $('#ex-go').disabled = false; }
+}
+
+// ---------------------------------------------------------------- keyboard --
+function typing() { const e = document.activeElement; return e && (e.tagName === 'INPUT' || e.tagName === 'TEXTAREA' || e.tagName === 'SELECT' || e.isContentEditable); }
+document.addEventListener('keydown', ev => {
+  const helpOpen = !$('#help').classList.contains('hidden');
+  if (ev.key === 'Escape') {
+    if (typing()) { document.activeElement.blur(); return; }
+    if (helpOpen) return $('#help').classList.add('hidden');
+    if (S.lb) {
+      if (!$('#edit-form').classList.contains('hidden')) return showEdit(false);
+      if (!$('#ex-form').classList.contains('hidden')) return showExport(false);
+      return closeLightbox();
+    }
+    $$('.menu.open').forEach(m => m.classList.remove('open'));
+    return;
+  }
+  if (ev.ctrlKey && ev.key === 'Enter' && typing()) {
+    const id = document.activeElement.id;
+    if (id === 'prompt' || $('#left').contains(document.activeElement)) return doRender();
+    if (id === 'ed-prompt') return submitEdit();
+    if (id === 'lb-note') return $('#lb-note').blur();
+    return;
+  }
+  if (typing() || ev.ctrlKey || ev.metaKey || ev.altKey) return;
+  if (helpOpen) { if (ev.key === '?') $('#help').classList.add('hidden'); return; }
+  const k = ev.key, lb = !!S.lb, cur = lb ? (S.lb.job ? S.lb : null) : S.focus;
+  const go = (n) => { if (!n) return; if (lb) openLightbox(n.job, n.idx); else setFocus(n.job, n.idx, true); };
+  const act = a => { if (cur) review(cur.job, cur.idx, a); };
+  switch (k) {
+    case '?': $('#help').classList.remove('hidden'); break;
+    case '/': ev.preventDefault(); if (lb) closeLightbox(); $('#q').focus(); $('#q').select(); break;
+    case 'r': ev.preventDefault(); if (lb) closeLightbox(); document.body.classList.add('show-left'); $('#prompt').focus(); break;
+    case 'j': case 'ArrowRight': ev.preventDefault(); go(stepImage(cur, 1)); break;
+    case 'k': case 'ArrowLeft': ev.preventDefault(); go(stepImage(cur, -1)); break;
+    case 'J': case 'ArrowDown': ev.preventDefault(); go(stepJob(cur, 1)); break;
+    case 'K': case 'ArrowUp': ev.preventDefault(); go(stepJob(cur, -1)); break;
+    case 'Enter': if (!lb && cur) openLightbox(cur.job, cur.idx); break;
+    case 'a': act('approve'); break;
+    case 'x': act('reject'); break;
+    case 'p': act('pending'); break;
+    case 's': act('toggle-star'); break;
+    case 'e': ev.preventDefault(); if (cur || (lb && S.lb.ref)) { if (!lb) openLightbox(cur.job, cur.idx); showEdit(true); } break;
+    case 'v': if (cur) { if (!lb) openLightbox(cur.job, cur.idx); variants(); } break;
+    case 't': ev.preventDefault(); if (cur) { if (!lb) openLightbox(cur.job, cur.idx); showExport(true); } break;
+    case 'n': if (cur) { ev.preventDefault(); if (!lb) openLightbox(cur.job, cur.idx); $('#lb-note').focus(); } break;
+    case 'R': loadJobs(); loadState(true); toast('refreshed', 'ok', 1000); break;
+    default: return;
+  }
+});
+
+// ------------------------------------------------------------------ wiring --
+function wire() {
+  $('#brand').addEventListener('change', onBrandChange);
+  $('#template').addEventListener('change', onTemplateChange);
+  $('#btn-preview').addEventListener('click', previewPrompt);
+  $('#btn-render').addEventListener('click', doRender);
+  $('#btn-save-tpl').addEventListener('click', saveTemplate);
+  $('#btn-refresh').addEventListener('click', () => { loadJobs(); loadState(true); });
+  $('#btn-left').addEventListener('click', () => document.body.classList.toggle('show-left'));
+  $('#btn-help').addEventListener('click', () => $('#help').classList.remove('hidden'));
+  $('#help-close').addEventListener('click', () => $('#help').classList.add('hidden'));
+  $('#help').addEventListener('click', ev => { if (ev.target === $('#help')) $('#help').classList.add('hidden'); });
+  // refs upload
+  const drop = $('#drop'), file = $('#file');
+  drop.addEventListener('click', () => file.click());
+  file.addEventListener('change', () => { uploadFiles(Array.from(file.files)); file.value = ''; });
+  ['dragenter', 'dragover'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', ev => uploadFiles(Array.from(ev.dataTransfer.files || []).filter(f => /^image\//.test(f.type))));
+  $('#refs').addEventListener('click', ev => { const b = ev.target.closest('[data-editref]'); if (b) { document.body.classList.remove('show-left'); openRefLightbox(b.dataset.editref); } });
+  // filters
+  const F = S.filters;
+  $('#f-status').addEventListener('change', e => { F.status = e.target.value; loadJobs(); });
+  $('#f-brand').addEventListener('change', e => { F.brand = e.target.value; loadJobs(); });
+  $('#f-pending').addEventListener('change', e => { F.pending = e.target.checked; loadJobs(); });
+  $('#f-starred').addEventListener('change', e => { F.starred = e.target.checked; loadJobs(); });
+  let qt; $('#q').addEventListener('input', e => { F.q = e.target.value.trim(); clearTimeout(qt); qt = setTimeout(loadJobs, 250); });
+  // gallery clicks
+  $('#jobs').addEventListener('click', ev => {
+    const im = ev.target.closest('.im'); if (im) return openLightbox(im.dataset.job, Number(im.dataset.idx));
+    const menu = ev.target.closest('[data-menu]');
+    if (menu) { const m = menu.parentElement, was = m.classList.contains('open'); $$('.menu.open').forEach(x => x.classList.remove('open')); m.classList.toggle('open', !was); return; }
+    const ja = ev.target.closest('[data-jact]');
+    if (ja) { $$('.menu.open').forEach(x => x.classList.remove('open')); return jobAction(ja.dataset.jact, ja.dataset.job); }
+    const p = ev.target.closest('[data-goto]');
+    if (p) { const j = jobById(p.dataset.goto); if (j) openLightbox(j.id, Math.max(0, (parseInt(p.dataset.img, 10) || 1) - 1)); else toast('parent job not in current list', 'warn'); }
+  });
+  document.addEventListener('click', ev => { if (!ev.target.closest('.menu')) $$('.menu.open').forEach(x => x.classList.remove('open')); });
+  // lightbox
+  $('#lb-close').addEventListener('click', closeLightbox);
+  $$('#lb [data-nav]').forEach(b => b.addEventListener('click', () => lbNav(Number(b.dataset.nav))));
+  $('#lb .view').addEventListener('click', ev => { if (ev.target === ev.currentTarget) closeLightbox(); });
+  $('#lb-acts').addEventListener('click', ev => { const b = ev.target.closest('[data-act]'); if (b && S.lb && S.lb.job) review(S.lb.job, S.lb.idx, b.dataset.act); });
+  $('#b-edit').addEventListener('click', () => showEdit($('#edit-form').classList.contains('hidden')));
+  $('#b-variants').addEventListener('click', variants);
+  $('#b-export').addEventListener('click', () => showExport($('#ex-form').classList.contains('hidden')));
+  $('#b-copy').addEventListener('click', () => { const c = lbCur(); if (c) copy(`${location.origin}/files/${c.j.id}/${c.im.file}`); else if (S.lb && S.lb.ref) copy(`${location.origin}/refs/${S.lb.ref}`); });
+  $('#b-rerun').addEventListener('click', () => S.lb && jobAction('rerun', S.lb.job));
+  const saveNote = () => { const c = lbCur(); if (c && $('#lb-note').value !== (c.im.note || '')) review(c.j.id, S.lb.idx, 'note', $('#lb-note').value); };
+  $('#lb-note').addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); saveNote(); $('#lb-note').blur(); } });
+  $('#lb-note').addEventListener('blur', saveNote);
+  $('#ed-cancel').addEventListener('click', () => showEdit(false));
+  $('#ed-go').addEventListener('click', () => submitEdit());
+  $('#ex-cancel').addEventListener('click', () => showExport(false));
+  $('#ex-go').addEventListener('click', submitExport);
+  $('#ex-targets').addEventListener('click', ev => { const b = ev.target.closest('[data-ex]'); if (b && !b.disabled) pickTarget(b.dataset.ex); });
+  $('#ex-results').addEventListener('click', ev => { const b = ev.target.closest('[data-copy]'); if (b) copy(b.dataset.copy); });
+  // keep relative times fresh
+  setInterval(() => { if (!S.jobs.some(isRunning)) renderJobs(); }, 60000);
+}
+
+async function boot() {
+  wire();
+  await loadState();
+  if (!S.state) { $('#jobs').innerHTML = '<div class="empty">cannot reach /api/state — is the server running?</div>'; return; }
+  S.prevRunning = new Set(S.state.running || []);
+  await loadJobs();
+  S.prevRunning = new Set(S.jobs.filter(isRunning).map(j => j.id));
+  schedulePoll();
+}
+boot();
+</script>
+</body>
+</html>

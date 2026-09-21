@@ -1,0 +1,34 @@
+# secrets — never in this repo (public-repo discipline, same as tee-empire)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*.json
+
+# runtime data: renders, job logs, uploaded references — large and reproducible
+data/*
+!data/.gitkeep
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+
+# local81 state
+.local81/state/
+.local81/plans/
+.local81/runs/
+.local81/logs/
+.local81/*.lock
+.local81/pulled-logs/
+
+# editors / OS
+.idea/
+.vscode/
+.DS_Store

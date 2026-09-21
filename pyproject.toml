@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "portrender"
+version = "0.1.0"
+description = "Portwright image render/review/hand-off automation on the OpenAI Images API — CLI + LAN web UI, brand-aware prompt library, exports to tee-empire / clemtock / AU2."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Jimmer Kelley" }]
+license = { text = "MIT" }
+keywords = ["gpt-image", "merch", "print-on-demand", "prompt-library", "portwright"]
+dependencies = []          # stdlib only, on purpose — pop-os has no pip
+
+[project.optional-dependencies]
+thumbs = ["Pillow>=9.0"]   # thumbnails + dry-run placeholders with text; everything works without it
+
+[project.scripts]
+portrender = "portrender.cli:main"
+
+[tool.setuptools]
+packages = ["portrender"]
+
+[tool.setuptools.package-data]
+portrender = ["web/*.html"]
