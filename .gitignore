@@ -32,3 +32,6 @@ dist/
 .idea/
 .vscode/
 .DS_Store
+
+# delivery bundle (history is in .git once bootstrap-repo.sh has run)
+portrender.bundle

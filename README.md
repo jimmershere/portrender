@@ -24,6 +24,7 @@ prompt template + brand ──▶ OpenAI Images API ──▶ data/renders/<job>
 
 ```bash
 cd /app/portrender
+bash scripts/bootstrap-repo.sh              # first time only: restores .git history + .claude/skills from portrender.bundle
 cp .env.example .env && chmod 600 .env      # add OPENAI_API_KEY — or skip: /app/tee-empire/.env is read as a fallback
 python3 -m portrender doctor --probe        # config, key, sibling ventures, auth-only API check
 
