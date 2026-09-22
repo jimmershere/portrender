@@ -25,7 +25,7 @@ prompt template + brand ──▶ OpenAI Images API ──▶ data/renders/<job>
 ```bash
 cd /app/portrender
 bash scripts/bootstrap-repo.sh              # first time only: restores .git history + .claude/skills from portrender.bundle
-cp .env.example .env && chmod 600 .env      # add OPENAI_API_KEY — or skip: /app/tee-empire/.env is read as a fallback
+cp .env.example .env && chmod 600 .env      # OPENAI_API_KEY lives here (shared with clemtock); /app/tee-empire/.env is the fallback
 python3 -m portrender doctor --probe        # config, key, sibling ventures, auth-only API check
 
 python3 -m portrender brands                # maddhatch · au2 · icenstone · earl_biggers
@@ -85,7 +85,7 @@ portrender/            package (cli, server, web/index.html, openai_images, prom
 prompts/templates/     the reusable prompt library (TOML)
 brands/                brand facts (TOML) — maddhatch, au2, icenstone, earl_biggers
 data/                  renders, job logs, uploaded refs (gitignored)
-scripts/               serve.sh · load-env.sh · install-user-service.sh · smoke.sh
+scripts/               serve.sh · load-env.sh · install-user-service.sh · deploy-quasimodo.sh · smoke.sh
 systemd/               user-unit template
 .local81/              local81 scope: pop-os → quasimodo:/app/portrender (+ post-deploy hook)
 .claude/skills/        the Claude Code skill that drives this tool
@@ -95,6 +95,8 @@ tests/                 unittest, no network
 
 ## Fleet
 
-Code of record is this git repo (pop-os). `local81 plan --scope portrender && local81 deploy --latest --scope portrender`
-pushes to `quasimodo:/app/portrender` (excludes `data/`, `.env`, `.git`). See `docs/quasimodo.md` for
+Code of record is this git repo (pop-os). `scripts/deploy-quasimodo.sh` pushes portrender **and**
+clemtock to quasimodo (local81 scopes when `local81` is on PATH, else the same rsync), copies
+`/app/portrender/.env` (600) and starts both services on :3070 / :3053. Under the hood it is
+`local81 plan --scope portrender && local81 deploy --latest --scope portrender` (excludes `data/`, `.env`, `.git`). See `docs/quasimodo.md` for
 the first run there and the systemd user service. Renders stay on whichever host made them (PR-2).

@@ -50,7 +50,8 @@ If that ever changes, it is a design decision to raise, not a patch.
 - **Nothing here publishes.** Exports are local file drops; Printify/Etsy/social stay behind
   tee-empire's and clemtock's own gates. Never add a `publish` verb to this repo.
 - No auth, no multi-user, no Docker/k8s. `scripts/serve.sh` + a systemd *user* unit is the ceiling.
-- Secrets only via env / `.env` / `/app/tee-empire/.env`; `.env` is gitignored; a key in history is an incident.
+- Secrets only via env / `/app/portrender/.env` (the OpenAI key lives here, shared with clemtock) / `/app/tee-empire/.env`; `.env` is gitignored and excluded from the local81 push; a key in history is an incident.
+- The fleet is **pop-os + quasimodo only**. There is no other render host; anything that names one is stale.
 - Keep this file under 200 lines; put detail in `docs/`.
 
 ## Open questions — do not guess

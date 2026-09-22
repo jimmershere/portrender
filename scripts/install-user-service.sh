@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # install-user-service.sh — run the portrender web UI as a systemd *user* service
-# (survives logout when `loginctl enable-linger $USER` is set — quasimodo/floor2 pattern).
+# (survives logout when `sudo loginctl enable-linger $USER` has been run on quasimodo).
 #   scripts/install-user-service.sh            # install + enable + start, binds 0.0.0.0:3070
 #   scripts/install-user-service.sh --host 127.0.0.1 --port 3070
 #   scripts/install-user-service.sh --remove

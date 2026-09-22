@@ -22,7 +22,13 @@ git config user.email >/dev/null 2>&1 || git config user.email "jimmershere@gmai
 
 git fetch -q "$BUNDLE" main
 if git rev-parse --verify -q main >/dev/null; then
-  git merge -q --ff-only FETCH_HEAD || { echo "!! local main has diverged from the bundle; resolve by hand" >&2; exit 1; }
+  if git merge-base --is-ancestor main FETCH_HEAD; then
+    git reset -q --mixed FETCH_HEAD        # fast-forward HEAD/index; working files (already delivered) stay put
+  elif git merge-base --is-ancestor FETCH_HEAD main; then
+    echo "==> local main is already ahead of the bundle; nothing to do"
+  else
+    echo "!! local main has diverged from the bundle; resolve by hand (git log main FETCH_HEAD)" >&2; exit 1
+  fi
 else
   git reset -q --mixed FETCH_HEAD          # point HEAD at the bundle's tip, keep the working files
 fi
