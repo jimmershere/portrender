@@ -1,0 +1,114 @@
+# Local81 playbook — deploy portrender (and clemtock) from pop-os to quasimodo.
+#
+# Run it with the poplab runner; DRY RUN IS THE DEFAULT, so read the argv it
+# prints before you add --apply:
+#
+#   /app/poplab/bin/local81 lint local81/portrender-deploy.yml
+#   /app/poplab/bin/local81 run  local81/portrender-deploy.yml            # dry run
+#   /app/poplab/bin/local81 run  local81/portrender-deploy.yml --apply
+#
+# ############################  DIRECTION OF TRUTH  ###########################
+# pop-os holds the portrender git repo; quasimodo had no /app/portrender at all
+# (verified 2026-09-23), so the mirror below creates it. CODE is pushed with
+# delete: true; runtime DATA (data/, out/, uploads/, .vault/, node_modules/) and
+# every .env are excluded and therefore never touched by rsync.
+#
+# clemtock exists on BOTH hosts on the same three commits, with pop-os carrying
+# the newer uncommitted work. A --delete dry run on 2026-09-23 reported zero
+# deletions, so the mirror is safe today — but that is a point-in-time fact, not
+# a guarantee. The `drift` guard below re-checks it on every run, and local81's
+# dry-run default means you see the result before anything is written.
+#
+# Secrets are NOT synced. /app/portrender/.env carries the OpenAI key that
+# clemtock also reads; copy it with scripts/deploy-quasimodo.sh (scp, mode 600)
+# or by hand. Never put a key in a playbook or in git.
+#
+# Rule inherited from /app/CLAUDE.md: never rsync --delete toward the host that
+# holds the only copy of something. tee-empire is deliberately absent here — it
+# lives on pop-os only and is not deployed anywhere.
+# #############################################################################
+name: portrender-deploy
+description: Mirror portrender and clemtock from pop-os to quasimodo and report service health.
+hosts:
+  - name: quasimodo
+    address: "{{ QUASI_HOST | default('192.168.0.20') }}"
+    user: "{{ QUASI_USER | default('jimbro') }}"
+vars:
+  portrender_dir: "/app/portrender"
+  clemtock_dir: "/app/clemtock"
+  portrender_port: "3070"
+  clemtock_port: "3053"
+tasks:
+  - name: refuse to run if the target holds venture data this playbook must never prune
+    shell: |
+      for d in /app/portwright-studio /app/AU2 /app/fantasys /app/parts-triage; do
+        [ -d "$d" ] && printf 'present-on-target(not-touched) %s\n' "$d"
+      done
+      echo "guard-ok"
+    register: guard
+
+  - name: report anything on the target that the code mirror would delete
+    shell: |
+      for d in {{ portrender_dir }} {{ clemtock_dir }}; do
+        [ -d "$d" ] || { printf 'absent %s (will be created)\n' "$d"; continue; }
+        printf 'present %s (%s files)\n' "$d" "$(find "$d" -type f -not -path '*/.git/*' | wc -l)"
+      done
+    register: drift
+
+  - name: ensure the target directories exist
+    shell: "mkdir -p {{ portrender_dir }} {{ clemtock_dir }} && echo ok"
+    register: mkdirs
+
+  - name: mirror portrender code (never data/, never .env)
+    sync:
+      src: "/app/portrender/"
+      dest: "{{ portrender_dir }}"
+      exclude: [".git", ".env", "data", ".local81", "__pycache__", ".venv", "*.bundle"]
+      delete: true
+
+  - name: mirror clemtock code (never out/, uploads/, .vault/, node_modules/, .env)
+    sync:
+      src: "/app/clemtock/"
+      dest: "{{ clemtock_dir }}"
+      exclude: [".git", ".env", "out", "uploads", ".vault", "node_modules", "__pycache__"]
+      delete: true
+
+  - name: portrender self-check on the target
+    shell: |
+      cd {{ portrender_dir }}
+      python3 -m portrender doctor 2>/dev/null \
+        | grep -E '"api_key_present"|"clemtock_present"|"tee_empire_present"|"python"|"templates_count"' \
+        || echo "doctor failed — is python3 >= 3.11 present?"
+      python3 -m unittest discover -s tests -t . 2>&1 | tail -3
+    register: selfcheck
+
+  - name: restart the portrender user service if one is installed
+    shell: |
+      if systemctl --user is-enabled portrender.service >/dev/null 2>&1; then
+        systemctl --user restart portrender.service && echo "restarted portrender.service"
+      else
+        echo "no user service — run: bash {{ portrender_dir }}/scripts/install-user-service.sh --host 0.0.0.0"
+      fi
+    register: svc
+    ignore_errors: true
+
+  - name: health check both ports
+    shell: |
+      sleep 2
+      for p in {{ portrender_port }} {{ clemtock_port }}; do
+        printf '%s -> %s\n' "$p" "$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$p/" || echo down)"
+      done
+    register: health
+    ignore_errors: true
+
+  - name: report
+    debug:
+      msg: |
+        host      : {{ host.name }} ({{ host.address }}) as {{ host.user }}
+        guard     : {{ guard.stdout }}
+        pre-sync  : {{ drift.stdout }}
+        doctor    : {{ selfcheck.stdout }}
+        service   : {{ svc.stdout }}
+        health    : {{ health.stdout }}
+        NOTE: .env is never synced. The OpenAI key must be copied separately
+        (scripts/deploy-quasimodo.sh does it with scp, mode 600).

@@ -19,8 +19,13 @@ case "$cmd" in
     mkdir -p "$ROOT/data"
     cd "$ROOT"
     nohup setsid "$PY" -m portrender serve "$@" >>"$LOG" 2>&1 &
-    echo $! >"$PID"; disown || true
+    disown || true
     sleep 1
+    # setsid forks, so $! is the short-lived wrapper, not the server: resolve the
+    # real pid or the pidfile goes stale the instant we write it (stop/status/
+    # restart then all report "not running" while the UI is up).
+    srv="$(pgrep -f "portrender serve" | head -n1 || true)"
+    if [[ -n "$srv" ]]; then echo "$srv" >"$PID"; fi
     if running; then tail -n 2 "$LOG"; else echo "failed to start — see $LOG"; exit 1; fi ;;
   stop)
     if running; then kill "$(cat "$PID")" && rm -f "$PID" && echo stopped; else echo "not running"; rm -f "$PID"; fi ;;
