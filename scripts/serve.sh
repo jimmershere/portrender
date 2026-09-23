@@ -11,7 +11,17 @@ LOG="$ROOT/data/portrender.log"
 PY="${PORTRENDER_PYTHON:-$(command -v python3)}"
 cmd="${1:-status}"; shift || true
 
-running() { [[ -f "$PID" ]] && kill -0 "$(cat "$PID")" 2>/dev/null; }
+# setsid forks, so the pid we can observe at launch is not always the pid the
+# server settles on. Trust the pidfile when it is live, otherwise re-resolve from
+# the process table and heal the file — without this, stop/status/restart report
+# "not running" while the UI is happily serving.
+srv_pid() { pgrep -f "\-m portrender serve" | head -n1; }
+running() {
+  if [[ -f "$PID" ]] && kill -0 "$(cat "$PID")" 2>/dev/null; then return 0; fi
+  local srv; srv="$(srv_pid || true)"
+  [[ -n "$srv" ]] && { echo "$srv" >"$PID"; return 0; }
+  return 1
+}
 
 case "$cmd" in
   start)
@@ -21,11 +31,7 @@ case "$cmd" in
     nohup setsid "$PY" -m portrender serve "$@" >>"$LOG" 2>&1 &
     disown || true
     sleep 1
-    # setsid forks, so $! is the short-lived wrapper, not the server: resolve the
-    # real pid or the pidfile goes stale the instant we write it (stop/status/
-    # restart then all report "not running" while the UI is up).
-    srv="$(pgrep -f "portrender serve" | head -n1 || true)"
-    if [[ -n "$srv" ]]; then echo "$srv" >"$PID"; fi
+    rm -f "$PID"            # running() re-resolves and writes the real pid
     if running; then tail -n 2 "$LOG"; else echo "failed to start — see $LOG"; exit 1; fi ;;
   stop)
     if running; then kill "$(cat "$PID")" && rm -f "$PID" && echo stopped; else echo "not running"; rm -f "$PID"; fi ;;
