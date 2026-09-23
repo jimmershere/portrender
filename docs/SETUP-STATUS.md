@@ -52,6 +52,23 @@ only on building the Chatterbox + Rhubarb + ffmpeg chain, itself unblocked by
 B-8; **b-roll video** goes to a rented vast.ai 4090 ($100 credit, ~$0.40/hr,
 ~250 GPU-hours); **social posting** still needs B-6.
 
+## Published
+
+`https://github.com/jimmershere/portrender` — **public**, pushed 2026-09-23,
+59 files, 11 commits. Pre-push verification: every blob in every commit scanned
+for key patterns (0 hits), `.env` confirmed gitignored and absent from the remote
+tree, remote `.env.example` confirmed to carry an empty `OPENAI_API_KEY=`.
+
+`repo-guard.sh` nonetheless exits **BLOCK**, on two false positives: the
+gitignored `.env` sitting in the working tree (git will not ship it) and
+`.env.example` matching its credential-bearing-path heuristic. The repo is
+therefore published **by hand** and deliberately left out of `repo-sync.yml` —
+see PR-4.
+
+Note the repo now publicly documents the fleet's LAN addresses, the Printify and
+Etsy shop ids, and the unresolved `floor2` delete hazard. None are credentials,
+but they are infrastructure details; say if that should change.
+
 ## Bugs found and fixed
 
 - **`/app/portrender/.env` held a bare `sk-proj-…` line with no `OPENAI_API_KEY=`.**
