@@ -20,18 +20,24 @@ before any of this ran.
 | clemtock on pop-os | `http://127.0.0.1:3053`, reads the key chain (`ETSY_*`, `OPENAI_*`, `PRINTIFY_*` all resolve) |
 | Export chain | `render --dry-run → approve → export --to tee-empire` drops PNG + `.empirespec.json` into `/app/tee-empire/inbox/` |
 
+**Passwordless sudo is now configured on both hosts** (jimmer, 2026-09-23 — it
+genuinely was not earlier in the session; `sudo -n` returned "a password is
+required" on both). quasimodo's sudoers forbids `SETENV`, so
+`sudo -n DEBIAN_FRONTEND=… apt-get` is refused there — drop the env var.
+
 ## Blocked — needs jimmer, not code
 
 | # | Blocker | Effect | Fix |
 |---|---|---|---|
 | B-1 | **OpenAI account has no credits.** `POST /v1/images/generations` → 429 `credit_balance_exhausted`. The key itself is fine. | *Every* real render is impossible — portrender, and clemtock's stills. Only `--dry-run` works. | Add credits at platform.openai.com → billing |
 | B-2 | No `ETSY_OAUTH_TOKEN` | Etsy draft listings / image upload cannot run. Printify drafts are unaffected. | `python3 /app/tee-empire/scripts/etsy_oauth.py` — needs a browser sign-in as the shop owner; cannot be automated |
-| B-3 | `OPENROUTER_API_KEY` unset | clemtock cannot write ad scripts | fill `/app/clemtock/.env` |
+| ~~B-3~~ | ~~`OPENROUTER_API_KEY` unset~~ | **RESOLVED 2026-09-23** — ollama v0.34.3 on pop-os with `qwen3:8b`; `providers/ollama_script.py` writes ad scripts locally in ~60-85s for $0. OpenRouter is now optional. | — |
 | B-4 | `KIEAI_API_KEY` unset | no shorts, no video clips | fill `/app/clemtock/.env` |
 | B-5 | `HEYGEN_API_KEY` unset | no spokesperson avatar / voice-over | fill `/app/clemtock/.env` |
 | B-6 | `POST_BRIDGE_API_KEY` unset | no social posting | fill `/app/clemtock/.env` |
-| B-7 | `node`/`npm` absent on **quasimodo**; `sudo` there needs a password | clemtock cannot run its headless renderer on quasimodo (it runs fine on pop-os, node v22) | `ssh quasimodo` then `cd /app/clemtock && bash scripts/quasimodo-setup.sh` |
-| B-8 | ImageMagick `convert` absent on pop-os; `sudo` needs a password | clemtock's asset-library thumbnailer fails at startup (`library.py:62`). Server and everything else run normally. | `sudo apt install imagemagick` |
+| ~~B-7~~ | ~~`node`/`npm` absent on quasimodo~~ | **PARTLY RESOLVED** — node 18.19.1, npm, chromium, python3-cryptography installed. See B-9. | — |
+| ~~B-8~~ | ~~ImageMagick absent on pop-os~~ | **RESOLVED** — `imagemagick` + `python3.12-venv` installed. The thumbnailer now succeeds: 15 assets across characters, creatures, logos, mascots. `ensurepip` works, so venvs (and Chatterbox) are no longer gated. | — |
+| B-9 | quasimodo has **node 18.19.1**; `playwright-core` declares `engines: node >=20` | clemtock's headless renderer may fail there. pop-os has node 22 and a faster CPU, so rendering belongs on pop-os anyway. | render on pop-os, or put node ≥20 on quasimodo (NodeSource is a third-party apt source, so it was **not** added unasked) |
 
 Local / open-source replacements for B-1 and B-3…B-6 are researched in
 [`local-ai-options.md`](local-ai-options.md). Short version: scripts, voice and
@@ -39,8 +45,12 @@ stills can all run free on pop-os; **text-to-video cannot** — neither host has
 discrete GPU.
 
 So of the requested outputs: **merch design + characters + social stills** are
-code-ready and blocked only on B-1; **ads** need B-1+B-3; **shorts/videos** need
-B-1+B-3+B-4 (+B-5 for a presenter); **social posting** needs B-6.
+code-ready and blocked only on B-1; **ad scripts now work locally for free**;
+**cartoon avatars with voice** need no GPU at all (see
+[`render-pipeline.md`](../../clemtock/docs/render-pipeline.md)) and are blocked
+only on building the Chatterbox + Rhubarb + ffmpeg chain, itself unblocked by
+B-8; **b-roll video** goes to a rented vast.ai 4090 ($100 credit, ~$0.40/hr,
+~250 GPU-hours); **social posting** still needs B-6.
 
 ## Bugs found and fixed
 
