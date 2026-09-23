@@ -1,5 +1,8 @@
 # portrender
 
+> **New here?** Read [`/app/START-HERE.md`](../START-HERE.md) first — it covers all four
+> tools in one page and tells you which one you want.
+
 **Render → review → hand off.** A one-operator tool that turns a brand-aware prompt into
 artwork via the OpenAI Images API (ChatGPT Images), lets you approve / reject / edit the
 results in seconds from a terminal or a LAN web UI, and drops the keepers into the sibling
@@ -19,6 +22,15 @@ prompt template + brand ──▶ OpenAI Images API ──▶ data/renders/<job>
                               ──▶ clemtock assets/ ──▶ ad scenes
                               ──▶ AU2 merch masters ──▶ products.json (human)
 ```
+
+## Defaults
+
+House default since 2026-09-23 (PR-1) is **`gpt-image-2.5-flare` at `quality=high`**, with
+`gpt-image-2.5-sunburst` for edits. That is a deliberate "we have credit, spend it on
+quality" choice — override per render with `--quality low` or per host in `.env`.
+
+The spend counter in the UI is an **estimate from an unverified price table**. Correct
+`PRICE_TABLE` (or set `PORTRENDER_PRICE_JSON`) once you have a real invoice.
 
 ## Quick start
 
@@ -73,7 +85,7 @@ vocabulary is appended automatically per `subject`. Add templates with
 | template | for |
 |---|---|
 | `tee-graphic` `typography-tee` `sticker` `badge-patch` `mug-wrap` `bottle-label` `poster` | merch art |
-| `character-concept` `mascot-sheet` | characters / mascots (model sheet → `brand.mascot.ref`) |
+| `character-concept` `mascot-sheet` | characters / mascots (model sheet → `brand.mascot.ref`; also how you draw the A–F mouth set clemtock needs for talking avatars) |
 | `theme-board` | 2×2 directions for a new theme or drop |
 | `logo-lockup` `product-shot` `social-square` | brand marks, listing/ad stills |
 | `edit-refine` `edit-cleanup` `edit-restyle` `edit-place-art` | edits: instruction · fix anatomy/text · move into a brand style · put art on a product shot |
@@ -83,20 +95,34 @@ vocabulary is appended automatically per `subject`. Add templates with
 ```
 portrender/            package (cli, server, web/index.html, openai_images, prompts, craft, brands, jobs, export, config)
 prompts/templates/     the reusable prompt library (TOML)
-brands/                brand facts (TOML) — maddhatch, au2, icenstone, earl_biggers
+brands/<slug>.toml     brand FACTS — voice, palette, lanes. Public, in git.
+brands/<slug>/         brand ART — mascot sheets, refs, mouth sprite sets.
+                       GITIGNORED and private (PR-5/PR-10): this repo is public.
 data/                  renders, job logs, uploaded refs (gitignored)
 scripts/               serve.sh · load-env.sh · install-user-service.sh · deploy-quasimodo.sh · smoke.sh
 systemd/               user-unit template
 .local81/              local81 scope: pop-os → quasimodo:/app/portrender (+ post-deploy hook)
 .claude/skills/        the Claude Code skill that drives this tool
-docs/                  DESIGN.md · api.md · quasimodo.md
+docs/                  SETUP-STATUS.md (what works / what's blocked) · DESIGN.md · api.md
+                       quasimodo.md · local-ai-options.md
 tests/                 unittest, no network
 ```
 
 ## Fleet
 
-Code of record is this git repo (pop-os). `scripts/deploy-quasimodo.sh` pushes portrender **and**
-clemtock to quasimodo (local81 scopes when `local81` is on PATH, else the same rsync), copies
-`/app/portrender/.env` (600) and starts both services on :3070 / :3053. Under the hood it is
-`local81 plan --scope portrender && local81 deploy --latest --scope portrender` (excludes `data/`, `.env`, `.git`). See `docs/quasimodo.md` for
-the first run there and the systemd user service. Renders stay on whichever host made them (PR-2).
+Code of record is this git repo (pop-os), published at
+<https://github.com/jimmershere/portrender>. To copy it to quasimodo:
+
+```bash
+/app/poplab/bin/local81 run local81/portrender-deploy.yml            # dry run — read this
+/app/poplab/bin/local81 run local81/portrender-deploy.yml --apply    # do it
+```
+
+`.env` and `data/` are never synced. **`local81` has no `plan`/`deploy`/`--scope`
+subcommands** — it is a playbook runner (`run`/`lint`/`hosts`); the `.local81/config.ini`
+"scope" format here belongs to a tool that exists on neither host. `scripts/deploy-quasimodo.sh`
+still contains that dead branch and works only because it falls through to plain rsync.
+
+**quasimodo is canonical for `data/renders` (PR-2)** — it has more disk and Pillow. To make
+pop-os see the same renders, run `scripts/setup-nfs-renders.sh` (it edits `/etc/exports` and
+`/etc/fstab`, so read it first; `--check` reports without changing anything).

@@ -26,8 +26,19 @@ WEB_DIR = Path(__file__).resolve().parent / "web"
 
 # Model names verified against the OpenAI Images API reference on 2026-09-21.
 # Prices are NOT verified — see docs/DESIGN.md "Cost". Override in .env.
-DEFAULT_MODEL = os.environ.get("PORTRENDER_MODEL", "gpt-image-2")
-DEFAULT_EDIT_MODEL = os.environ.get("PORTRENDER_EDIT_MODEL", DEFAULT_MODEL)
+# PR-1, answered 2026-09-23: "set the default quality to high, and whatever high
+# quality model should pair with it. we have plenty of credits and buffer."
+#
+# All seven KNOWN_MODELS were confirmed present on the account on 2026-09-23 via
+# GET /v1/models. The 2.5 family is the newest (…-2026-09-08). CLAUDE.md records
+# sunburst as the editing-precision variant, so flare is its generation counterpart
+# and is the house default for `render`; sunburst is the default for `edit`.
+#
+# ASSUMED, NOT MEASURED: that flare beats gpt-image-2 for generation quality. There
+# are no credits on the account, so nothing has been rendered to compare. Revisit
+# alongside PRICE_TABLE after the first real invoice.
+DEFAULT_MODEL = os.environ.get("PORTRENDER_MODEL", "gpt-image-2.5-flare")
+DEFAULT_EDIT_MODEL = os.environ.get("PORTRENDER_EDIT_MODEL", "gpt-image-2.5-sunburst")
 KNOWN_MODELS = [
     "gpt-image-2",
     "gpt-image-2.5-sunburst",
@@ -38,7 +49,7 @@ KNOWN_MODELS = [
     "chatgpt-image-latest",
 ]
 DEFAULT_SIZE = os.environ.get("PORTRENDER_SIZE", "1024x1024")
-DEFAULT_QUALITY = os.environ.get("PORTRENDER_QUALITY", "medium")
+DEFAULT_QUALITY = os.environ.get("PORTRENDER_QUALITY", "high")   # PR-1
 DEFAULT_BACKGROUND = os.environ.get("PORTRENDER_BACKGROUND", "auto")
 DEFAULT_FORMAT = os.environ.get("PORTRENDER_FORMAT", "png")
 DEFAULT_N = int(os.environ.get("PORTRENDER_N", "2"))
@@ -64,8 +75,11 @@ ENV_FILES: List[Path] = [
 ]
 
 # Rough per-image USD estimates used ONLY for the running total shown in the UI.
-# Unverified against the current pricing page; edit freely, or set
-# PORTRENDER_PRICE_JSON to a JSON object {"model|quality": usd}.
+# STILL UNVERIFIED — these are placeholders, and the house default is now `high`,
+# so the UI's spend counter reads ~3x what `medium` used to show. Correct this table
+# (or set PORTRENDER_PRICE_JSON) from the first real invoice; PR-1 explicitly agreed
+# that the default should then be re-decided from cost-per-acceptable-image rather
+# than from the list price.
 PRICE_TABLE: Dict[str, float] = {
     "default|low": 0.02,
     "default|medium": 0.07,
