@@ -17,6 +17,7 @@ before any of this ran.
 | Printify | token live; shop `27415408` = *EarlBiggersDammit* (etsy channel), 113 products, 2646 blueprints readable |
 | Etsy app auth | keystring + shared secret valid; `openapi-ping` → `{"application_id":1518422772535}` |
 | Etsy shop id | resolved to **65833426** (`EarlBiggers`) via `findShops` |
+| clemtock on pop-os | `http://127.0.0.1:3053`, reads the key chain (`ETSY_*`, `OPENAI_*`, `PRINTIFY_*` all resolve) |
 | Export chain | `render --dry-run → approve → export --to tee-empire` drops PNG + `.empirespec.json` into `/app/tee-empire/inbox/` |
 
 ## Blocked — needs jimmer, not code
@@ -29,6 +30,8 @@ before any of this ran.
 | B-4 | `KIEAI_API_KEY` unset | no shorts, no video clips | fill `/app/clemtock/.env` |
 | B-5 | `HEYGEN_API_KEY` unset | no spokesperson avatar / voice-over | fill `/app/clemtock/.env` |
 | B-6 | `POST_BRIDGE_API_KEY` unset | no social posting | fill `/app/clemtock/.env` |
+| B-7 | `node`/`npm` absent on **quasimodo**; `sudo` there needs a password | clemtock cannot run its headless renderer on quasimodo (it runs fine on pop-os, node v22) | `ssh quasimodo` then `cd /app/clemtock && bash scripts/quasimodo-setup.sh` |
+| B-8 | ImageMagick `convert` absent on pop-os; `sudo` needs a password | clemtock's asset-library thumbnailer fails at startup (`library.py:62`). Server and everything else run normally. | `sudo apt install imagemagick` |
 
 So of the requested outputs: **merch design + characters + social stills** are
 code-ready and blocked only on B-1; **ads** need B-1+B-3; **shorts/videos** need
@@ -40,9 +43,14 @@ B-1+B-3+B-4 (+B-5 for a presenter); **social posting** needs B-6.
   Both `config._parse_env_file` and `scripts/load-env.sh` skip lines without `=`,
   so the key was never loaded by portrender *or* clemtock. It was also mode 664,
   not 600. Fixed both.
-- `scripts/serve.sh` wrote `$!` to the pidfile, but `setsid` forks — the recorded
-  pid was dead on arrival, so `start` reported failure while the server ran, and
-  `stop`/`status`/`restart` all said "not running". Now resolves the real pid.
+- **`scripts/serve.sh` (portrender *and* clemtock) wrote `$!` to the pidfile, but
+  `setsid` forks** — the recorded pid was dead on arrival, so `start` reported
+  failure while the server ran, and `stop`/`status`/`restart` all said "not
+  running". Resolving the pid once at launch was still not enough (the server does
+  not always settle on the pid visible a second later), so `running()` now trusts
+  the pidfile only while it is live and otherwise re-resolves from the process
+  table. Verified pidfile == the pid holding the listening socket on :3070 and
+  :3053 across a full stop/start cycle.
 - `core/etsy.py` sent `x-api-key: <keystring>`. This app is registered with a
   shared secret, so Etsy answers 403 *"Shared secret is required in x-api-key
   header."* until the header is `<keystring>:<shared_secret>`. Added
