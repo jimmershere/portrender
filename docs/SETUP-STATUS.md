@@ -33,6 +33,11 @@ before any of this ran.
 | B-7 | `node`/`npm` absent on **quasimodo**; `sudo` there needs a password | clemtock cannot run its headless renderer on quasimodo (it runs fine on pop-os, node v22) | `ssh quasimodo` then `cd /app/clemtock && bash scripts/quasimodo-setup.sh` |
 | B-8 | ImageMagick `convert` absent on pop-os; `sudo` needs a password | clemtock's asset-library thumbnailer fails at startup (`library.py:62`). Server and everything else run normally. | `sudo apt install imagemagick` |
 
+Local / open-source replacements for B-1 and B-3…B-6 are researched in
+[`local-ai-options.md`](local-ai-options.md). Short version: scripts, voice and
+stills can all run free on pop-os; **text-to-video cannot** — neither host has a
+discrete GPU.
+
 So of the requested outputs: **merch design + characters + social stills** are
 code-ready and blocked only on B-1; **ads** need B-1+B-3; **shorts/videos** need
 B-1+B-3+B-4 (+B-5 for a presenter); **social posting** needs B-6.
