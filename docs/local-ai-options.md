@@ -61,10 +61,17 @@ driving. Both beat paying OpenRouter.
 ### Voice (replaces the voice half of `HEYGEN_API_KEY`, B-5) — ✅ solved locally
 
 **Chatterbox** (Resemble AI, **MIT**) is the standout: zero-shot voice cloning
-from ~5 s of reference audio, and the **Chatterbox-Nano** variant (110M params)
-is reported to run **~3× faster than realtime on 8 CPU cores** *(web)* — pop-os
-has 16 threads. Resemble's own blind study claims 65.3% listener preference over
-ElevenLabs *(vendor claim — treat as marketing)*. A self-host server with an
+from ~5 s of reference audio. The **Chatterbox-Nano** variant (110M params) is
+reported to run ~3× faster than realtime on 8 CPU cores *(web)*.
+
+⚠️ **Measured on pop-os 2026-09-23, the DEFAULT model is 8–15× *slower* than
+realtime** (30 chars → 1.64 s audio in 25 s; 124 chars → 5.56 s audio in 44 s).
+The "3× faster" figure is Nano specifically, not Chatterbox generally. A 30 s
+voice-over is therefore ~4–8 minutes of CPU: batch, not interactive. Nano is the
+upgrade path if that becomes the bottleneck.
+
+Resemble's own blind study claims 65.3% listener preference over ElevenLabs
+*(vendor claim — treat as marketing)*. A self-host server with an
 OpenAI-compatible API and CPU support exists *(web)*.
 
 Alternatives: **Piper** (MIT, fastest on CPU, audibly synthetic, no cloning),
