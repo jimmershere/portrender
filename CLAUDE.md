@@ -56,10 +56,15 @@ If that ever changes, it is a design decision to raise, not a patch.
 
 ## Open questions — do not guess
 
+Tracked as GitHub issues: <https://github.com/jimmershere/portrender/issues>.
+PR-6 and PR-10…PR-14 live in `docs/local-ai-options.md` and
+`../clemtock/docs/render-pipeline.md`; TE-10 (the `floor2` delete hazard) is
+filed here because tee-empire has no repo.
+
 | # | Question |
 |---|---|
-| PR-1 | Which model/quality is the house default once real cost data exists? (`PORTRENDER_MODEL`, `PRICE_TABLE`) |
-| PR-2 | Does quasimodo hold the canonical `data/renders`, or does each host keep its own? (local81 scope excludes `data/` either way) |
-| PR-3 | Should `au2` / `icenstone` become tee-empire brands (`scripts/onboard_brand.py`), so `--to tee-empire` routes to a real shop? |
+| [PR-1](https://github.com/jimmershere/portrender/issues/1) | Which model/quality is the house default once real cost data exists? (`PORTRENDER_MODEL`, `PRICE_TABLE`) |
+| [PR-2](https://github.com/jimmershere/portrender/issues/2) | Does quasimodo hold the canonical `data/renders`, or does each host keep its own? (local81 scope excludes `data/` either way) |
+| [PR-3](https://github.com/jimmershere/portrender/issues/3) | Should `au2` / `icenstone` become tee-empire brands (`scripts/onboard_brand.py`), so `--to tee-empire` routes to a real shop? |
 | ~~PR-4~~ | **ANSWERED 2026-09-23 — published** to `jimmershere/portrender` (public). History was verified secret-free at blob level; `.env` was never tracked and `.env.example`'s only historical version has an empty `OPENAI_API_KEY=`. **Still NOT in `repo-sync.yml`**: `repo-guard.sh` exits BLOCK on two false positives (the gitignored working-tree `.env`, and `.env.example` matching its credential-path heuristic). An unattended nightly push must never be wired to a guard that returns BLOCK — fix the guard or keep publishing by hand. |
-| PR-5 | Reference-image edits for mascot consistency need `brands/<slug>/` art checked in — is that OK for a public repo, or keep refs under `data/refs/`? |
+| [PR-5](https://github.com/jimmershere/portrender/issues/4) | Reference-image edits for mascot consistency need `brands/<slug>/` art checked in — is that OK for a public repo, or keep refs under `data/refs/`? |
