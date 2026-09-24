@@ -26,7 +26,8 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from . import __version__, brands as brands_mod, config, export as export_mod, jobs, openai_images, prompts
+from . import (__version__, brands as brands_mod, characters, config,
+               export as export_mod, jobs, openai_images, prompts, video as video_mod)
 
 
 def _kv(pairs: List[str]) -> Dict[str, str]:
@@ -103,6 +104,45 @@ def _has_pillow() -> bool:
         return True
     except Exception:  # noqa: BLE001
         return False
+
+
+def cmd_characters(a: argparse.Namespace) -> int:
+    """The reusable face roster — who can be made to talk, and by which engine."""
+    if a.sub == "show":
+        _emit(characters.load(a.name).summary(), True)
+        return 0
+    rows = characters.roster()
+    if a.json:
+        _emit([c.summary() for c in rows], True)
+        return 0
+    if not rows:
+        print("no characters yet — put artwork at brands/<slug>/character.png")
+        return 0
+    for c in rows:
+        engines = ",".join(c.engines) or "-"
+        mark = "OK " if c.ready else "!! "
+        print(f"{mark}{c.slug:14} {c.name:24} engines: {engines:16} mouths: {len(c.mouths)}/9")
+        for b in c.blockers():
+            print(f"     - {b}")
+    return 0
+
+
+def cmd_video(a: argparse.Namespace) -> int:
+    """Queue (and by default run) a talking-character video job."""
+    try:
+        man = video_mod.create(character=a.character, text=a.text, engine=a.engine,
+                               label=a.label or "", aspect=a.aspect)
+    except (ValueError, RuntimeError) as e:
+        print(f"portrender video: {e}", file=sys.stderr)
+        return 2
+    print(f"queued {man['id']}  character={man['character']} engine={man['engine']}",
+          file=sys.stderr)
+    if a.queue_only:
+        _emit(jobs.summarize(man), a.json)
+        return 0
+    man = video_mod.run(man["id"], dry_run=a.dry_run)
+    _emit(jobs.summarize(man), a.json)
+    return 0 if man.get("status") == "done" else 1
 
 
 def cmd_brands(a: argparse.Namespace) -> int:
@@ -390,6 +430,21 @@ def build_parser() -> argparse.ArgumentParser:
     sp = ap.add_subparsers(dest="cmd", required=True)
 
     p = sp.add_parser("doctor", help="config, key presence, sibling ventures"); p.add_argument("--probe", action="store_true", help="auth-only API call"); p.set_defaults(fn=cmd_doctor)
+
+    p = sp.add_parser("video", help="render a talking-character video (delegates to clemtock)")
+    p.add_argument("-c", "--character", required=True, help="character slug, e.g. jimmer")
+    p.add_argument("-t", "--text", required=True, help="what they say")
+    p.add_argument("--engine", default="", choices=["", "heygen", "cartoon"],
+                   help="heygen = paid, professional; cartoon = free, local")
+    p.add_argument("--aspect", default="9:16")
+    p.add_argument("--label", default="")
+    p.add_argument("--queue-only", action="store_true", help="create the job, do not render")
+    p.add_argument("--dry-run", action="store_true", help="no clemtock call, no spend")
+    p.add_argument("--json", action="store_true"); p.set_defaults(fn=cmd_video)
+
+    p = sp.add_parser("characters", help="list reusable characters (jimmer, …) and what can render them")
+    p.add_argument("sub", nargs="?", choices=["show"]); p.add_argument("name", nargs="?")
+    p.add_argument("--json", action="store_true"); p.set_defaults(fn=cmd_characters)
 
     p = sp.add_parser("brands", help="list brands"); p.add_argument("sub", nargs="?", choices=["show"]); p.add_argument("name", nargs="?"); p.add_argument("--json", action="store_true"); p.set_defaults(fn=cmd_brands)
 

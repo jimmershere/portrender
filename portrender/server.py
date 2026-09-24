@@ -25,7 +25,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from . import __version__, brands as brands_mod, config, export as export_mod, jobs, prompts
+from . import characters, __version__, brands as brands_mod, config, export as export_mod, jobs, prompts
 
 _procs: Dict[str, subprocess.Popen] = {}
 _procs_lock = threading.Lock()
@@ -84,6 +84,7 @@ def api_state() -> Dict[str, Any]:
     return {
         "version": __version__, "config": info, "dry_run": DRY_RUN,
         "brands": [b.summary() for b in brands_mod.list_brands()],
+        "characters": [c.summary() for c in characters.roster()],
         "templates": [t.summary() for t in prompts.list_templates()],
         "models": config.KNOWN_MODELS, "qualities": config.QUALITIES, "sizes": config.SIZES,
         "backgrounds": config.BACKGROUNDS, "subjects": ["none", "cartoon_mascot", "humanoid", "animal", "typography_only", "product"],
