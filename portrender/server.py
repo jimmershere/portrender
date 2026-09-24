@@ -25,7 +25,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from . import characters, __version__, brands as brands_mod, config, export as export_mod, jobs, prompts
+from . import characters, video as video_mod, __version__, brands as brands_mod, config, export as export_mod, jobs, prompts
 
 _procs: Dict[str, subprocess.Popen] = {}
 _procs_lock = threading.Lock()
@@ -136,6 +136,16 @@ def api_render(b: Dict[str, Any]) -> Dict[str, Any]:
     man = jobs.create(kind="generate", prompt=text, label=label, brand=brand.slug if brand else None,
                       template=tpl.name if tpl else None, vars=user_vars, notes=b.get("notes") or "",
                       tags=b.get("tags") or [], **p)
+    spawn(man["id"])
+    return {"job": jobs.summarize(man)}
+
+
+def api_video(b: Dict[str, Any]) -> Dict[str, Any]:
+    """Queue a talking-character video. Rendering happens in clemtock (see video.py)."""
+    man = video_mod.create(
+        character=str(b.get("character") or ""), text=str(b.get("text") or "").strip(),
+        engine=str(b.get("engine") or ""), label=str(b.get("label") or ""),
+        aspect=str(b.get("aspect") or "9:16"), notes=str(b.get("notes") or ""))
     spawn(man["id"])
     return {"job": jobs.summarize(man)}
 
@@ -252,7 +262,7 @@ def api_jobs(q: Dict[str, str]) -> List[Dict[str, Any]]:
 ROUTES_POST = {
     "/api/prompt": api_prompt, "/api/render": api_render, "/api/edit": api_edit,
     "/api/review": api_review, "/api/export": api_export, "/api/templates": api_templates_save,
-    "/api/upload": api_upload,
+    "/api/upload": api_upload, "/api/video": api_video,
     "/api/notes": lambda b: {"job": jobs.summarize(jobs.set_notes(b["job"], b.get("notes") or "", b.get("tags")))},
     "/api/delete": lambda b: {"deleted": [jobs.delete(j) or j for j in (b.get("jobs") or [])]},
     "/api/rerun": lambda b: (spawn(b["job"]), {"job": jobs.summarize(jobs.read(b["job"]))})[1],

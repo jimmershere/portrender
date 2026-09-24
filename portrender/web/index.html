@@ -224,6 +224,26 @@ main { display: grid; grid-template-columns: 350px 1fr; flex: 1; min-height: 0; 
     <div id="prompt-count"></div>
   </div>
 
+  <h2 style="margin-top:16px">Talking video</h2>
+  <label class="f">Character</label>
+  <select id="v-character"></select>
+  <div id="v-charinfo" class="muted" style="font-size:11px;margin-top:2px"></div>
+  <label class="f">Engine</label>
+  <div class="row" id="v-engines" style="gap:10px">
+    <label class="chk"><input type="radio" name="v-engine" value="heygen" checked> HeyGen <span class="muted">(~$0.02/s)</span></label>
+    <label class="chk"><input type="radio" name="v-engine" value="cartoon"> Local <span class="muted">(free, crude)</span></label>
+  </div>
+  <label class="f">Script <span class="muted">(what they say)</span></label>
+  <textarea id="v-text" rows="4" placeholder="Appearance Unlimited, Traverse City. Nobody is coming to save your paint job."></textarea>
+  <div class="row" style="margin-top:6px">
+    <div><label class="f">Aspect</label><select id="v-aspect"></select></div>
+    <div><label class="f">Label (optional)</label><input id="v-label" placeholder="short name"></div>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <button id="btn-video" class="primary fix">Render video</button>
+  </div>
+  <div class="muted" style="font-size:11px">Drafts land in the queue as <b>pending</b>. Approve there — publishing is a separate, gated step.</div>
+
   <h2 style="margin-top:16px">Save as template</h2>
   <div class="row">
     <input id="tpl-name" placeholder="name (slug)">
@@ -439,7 +459,49 @@ function renderLeft() {
   fill($('#model'), st.models, cfg.model); fill($('#background'), st.backgrounds, cfg.background);
   fill($('#ed-n'), ['1', '2', '3', '4', '5', '6'], '2'); fill($('#ed-quality'), st.qualities, cfg.quality);
   fill($('#ed-size'), st.sizes, 'auto'); fill($('#ed-model'), st.models, cfg.edit_model || cfg.model);
+  fill($('#v-aspect'), ['9:16', '16:9', '1:1'], ls.get('v-aspect') || '9:16');
+  renderCharacters();
   onBrandChange(); onTemplateChange(); renderRefs();
+}
+function renderCharacters() {
+  const cs = S.state.characters || [];
+  const sel = $('#v-character');
+  fill(sel, cs.length
+    ? cs.map(c => ({ value: c.slug, label: c.ready ? c.name : `${c.name} (not ready)` }))
+    : [{ value: '', label: '— no characters —' }], ls.get('v-character'));
+  onCharacterChange();
+}
+function charBySlug(slug) { return (S.state.characters || []).find(c => c.slug === slug); }
+function onCharacterChange() {
+  const c = charBySlug($('#v-character').value);
+  ls.set('v-character', $('#v-character').value);
+  const info = $('#v-charinfo');
+  if (!c) { info.textContent = 'put artwork at brands/<slug>/character.png'; return; }
+  // Only offer an engine this character can actually use, and say why when it cannot.
+  $$('#v-engines input[name=v-engine]').forEach(r => {
+    const ok = (c.engines || []).includes(r.value);
+    r.disabled = !ok;
+    r.closest('label').style.opacity = ok ? '' : .45;
+    if (!ok && r.checked) { const alt = $$('#v-engines input:not([disabled])')[0]; if (alt) alt.checked = true; }
+  });
+  info.innerHTML = c.ready
+    ? `engines: ${esc((c.engines || []).join(', '))} · mouths ${c.mouth_count}/9`
+    : `<span style="color:#e88">${esc((c.blockers || []).join(' · '))}</span>`;
+}
+async function submitVideo() {
+  const c = $('#v-character').value, text = $('#v-text').value.trim();
+  if (!c) return toast('pick a character', 'err');
+  if (!text) return toast('give them something to say', 'err');
+  const engine = ($('#v-engines input[name=v-engine]:checked') || {}).value || 'heygen';
+  ls.set('v-aspect', $('#v-aspect').value);
+  const btn = $('#btn-video'); btn.disabled = true;
+  try {
+    const r = await api('/api/video', { character: c, text, engine,
+      aspect: $('#v-aspect').value, label: $('#v-label').value });
+    toast(`queued ${r.job.id}`);
+    await loadJobs();
+  } catch (e) { oops(e); }
+  finally { btn.disabled = false; }
 }
 function onBrandChange() {
   const b = S.state.brands.find(x => x.slug === $('#brand').value);
@@ -573,10 +635,14 @@ function jobCard(j) {
   const parent = j.parent ? `<span class="parent" data-goto="${esc(j.parent.job)}" data-img="${esc(j.parent.image)}">↳ from ${esc(j.parent.job)}:${esc(j.parent.image)}</span>` : '';
   const imgs = j.images.map((im, i) => {
     const src = im.thumb ? `/files/${j.id}/${im.thumb}` : `/files/${j.id}/${im.file}`;
+    // A draft video reviews like a still: same tile, same approve keys — it just plays.
+    const media = im.video
+      ? `<video src="/files/${j.id}/${im.file}" poster="${im.thumb ? `/files/${j.id}/${im.thumb}` : ''}" controls preload="none" playsinline></video>`
+      : `<img src="${src}" loading="lazy" alt="">`;
     const fo = S.focus && S.focus.job === j.id && S.focus.idx === i ? ' focus' : '';
     const ex = (im.exports || []).map(e => e.target).filter((v, k, a) => a.indexOf(v) === k);
     return `<div class="im ${esc(im.status || 'pending')}${fo}" data-job="${esc(j.id)}" data-idx="${i}" title="${esc(im.file)} ${im.size_px ? im.size_px.join('×') : ''}">
-      <img src="${src}" loading="lazy" alt="">
+      ${media}
       <span class="tag st">${i + 1} ${im.status === 'approved' ? '✓' : im.status === 'rejected' ? '✕' : '·'}</span>
       ${im.starred ? '<span class="tag star">★</span>' : ''}
       ${ex.length ? `<span class="tag ex">→ ${esc(ex.join(', '))}</span>` : ''}
@@ -589,6 +655,7 @@ function jobCard(j) {
       ${j.brand ? `<span class="chip brand">${esc(j.brand)}</span>` : ''}
       <span class="badge ${st}">${run ? '<span class="spin"></span>' : ''}${st}</span>
       ${j.kind === 'edit' ? '<span class="chip">edit</span>' : ''}
+      ${j.kind === 'video' ? `<span class="chip">video${j.duration ? ' ' + j.duration + 's' : ''}</span>` : ''}
       <span class="meta">${esc(j.model || '')} ${esc(j.size || '')} ${esc(j.quality || '')}${j.cost_estimate != null ? ' · ' + usd(j.cost_estimate) : ''}</span>
       ${j.template ? `<span class="chip" title="template">${esc(j.template)}</span>` : ''}
       ${parent}
@@ -885,6 +952,8 @@ function wire() {
   $('#template').addEventListener('change', onTemplateChange);
   $('#btn-preview').addEventListener('click', previewPrompt);
   $('#btn-render').addEventListener('click', doRender);
+  $('#btn-video').addEventListener('click', submitVideo);
+  $('#v-character').addEventListener('change', onCharacterChange);
   $('#btn-save-tpl').addEventListener('click', saveTemplate);
   $('#btn-refresh').addEventListener('click', () => { loadJobs(); loadState(true); });
   $('#btn-left').addEventListener('click', () => document.body.classList.toggle('show-left'));

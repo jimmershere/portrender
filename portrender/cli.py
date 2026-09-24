@@ -298,7 +298,12 @@ def cmd_edit(a: argparse.Namespace) -> int:
 
 
 def cmd_run(a: argparse.Namespace) -> int:
-    man = jobs.run(a.job, dry_run=a.dry_run)
+    # Video jobs are rendered by clemtock, not by the Images API — dispatch on kind so
+    # `run` works the same from the CLI and from the web UI's background spawn.
+    if jobs.read(a.job).get("kind") == "video":
+        man = video_mod.run(a.job, dry_run=a.dry_run)
+    else:
+        man = jobs.run(a.job, dry_run=a.dry_run)
     _emit(jobs.summarize(man) if a.json else _fmt_done(man), a.json)
     return 0 if man["status"] == "done" else 1
 

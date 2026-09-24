@@ -47,8 +47,18 @@ If that ever changes, it is a design decision to raise, not a patch.
 
 ## Constraints (inherited — non-negotiable)
 
-- **Nothing here publishes.** Exports are local file drops; Printify/Etsy/social stay behind
-  tee-empire's and clemtock's own gates. Never add a `publish` verb to this repo.
+- **portrender orchestrates; it never publishes directly.** *(Amended 2026-09-24, jimmer
+  confirming. Was: "Nothing here publishes … never add a `publish` verb".)*
+  portrender is now the operator's single control surface: the approve button and the
+  "send it" button live in this UI. What it must **never** do is hold a provider
+  credential or call an external publishing API itself. It records the decision and
+  triggers the venture that owns the credential — clemtock/PostBridge for social,
+  tee-empire for Printify/Etsy, which keep their own `--live` gates.
+  The reason is concrete: this web UI is **LAN-only with no auth** (next line). A social
+  token behind an unauthenticated UI is the incident. Delegation keeps the blast radius
+  at "can queue work" rather than "can post as the brand".
+  The same pattern already governs video: `portrender video` shells out to clemtock
+  rather than importing a HeyGen key. Follow it for every outbound action.
 - No auth, no multi-user, no Docker/k8s. `scripts/serve.sh` + a systemd *user* unit is the ceiling.
 - Secrets only via env / `/app/portrender/.env` (the OpenAI key lives here, shared with clemtock) / `/app/tee-empire/.env`; `.env` is gitignored and excluded from the local81 push; a key in history is an incident.
 - The fleet is **pop-os + quasimodo only**. There is no other render host; anything that names one is stale.
