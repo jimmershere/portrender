@@ -44,8 +44,8 @@ def clemtock_dir() -> Path:
     return d
 
 
-def create(*, character: str, text: str, engine: str = "", label: str = "",
-           aspect: str = "9:16", notes: str = "") -> Dict[str, Any]:
+def create(*, character: str, text: str = "", engine: str = "", label: str = "",
+           aspect: str = "9:16", notes: str = "", audio: str = "") -> Dict[str, Any]:
     """Queue a video job. Nothing is rendered and nothing is spent until run()."""
     engine = (engine or DEFAULT_ENGINE).lower()
     if engine not in ENGINES:
@@ -59,12 +59,16 @@ def create(*, character: str, text: str, engine: str = "", label: str = "",
         raise ValueError(f"{character!r} cannot use the local engine: "
                          + "; ".join(char.blockers()))
 
+    if not text and not audio:
+        raise ValueError("give text to speak, or audio to lip-sync")
     man = jobs.create(
-        kind="video", prompt=text, label=label or text[:48], brand=character,
+        kind="video", prompt=text or f"[audio] {Path(audio).name}",
+        label=label or (text[:48] if text else Path(audio).stem), brand=character,
         template=None, vars={}, model=f"clemtock:{engine}", n=1,
         size=aspect, quality="-", background="-", output_format="mp4", notes=notes)
     man["character"] = character
     man["engine"] = engine
+    man["audio"] = str(Path(audio).resolve()) if audio else ""
     man["aspect"] = aspect
     jobs.write(man)
     return man
@@ -90,8 +94,11 @@ def run(jid: str, *, dry_run: bool = False) -> Dict[str, Any]:
         else:
             root = clemtock_dir()
             cmd = ["python3", "-m", "clemtock", "avatar",
-                   "--provider", engine, "--brand", man["character"],
-                   "--text", man["prompt"], "--out", str(out)]
+                   "--provider", engine, "--brand", man["character"], "--out", str(out)]
+            if man.get("audio"):
+                cmd += ["--audio", man["audio"]]
+            else:
+                cmd += ["--text", man["prompt"]]
             jobs.log(jid, "clemtock: " + " ".join(cmd[3:]))
             proc = subprocess.run(cmd, cwd=str(root / "backend"),
                                   capture_output=True, timeout=3600)

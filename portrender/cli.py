@@ -130,8 +130,8 @@ def cmd_characters(a: argparse.Namespace) -> int:
 def cmd_video(a: argparse.Namespace) -> int:
     """Queue (and by default run) a talking-character video job."""
     try:
-        man = video_mod.create(character=a.character, text=a.text, engine=a.engine,
-                               label=a.label or "", aspect=a.aspect)
+        man = video_mod.create(character=a.character, text=a.text or "", engine=a.engine,
+                               label=a.label or "", aspect=a.aspect, audio=a.audio or "")
     except (ValueError, RuntimeError) as e:
         print(f"portrender video: {e}", file=sys.stderr)
         return 2
@@ -438,7 +438,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sp.add_parser("video", help="render a talking-character video (delegates to clemtock)")
     p.add_argument("-c", "--character", required=True, help="character slug, e.g. jimmer")
-    p.add_argument("-t", "--text", required=True, help="what they say")
+    p.add_argument("-t", "--text", default="", help="what they say")
+    p.add_argument("--audio", default="",
+                   help="lip-sync to this WAV/MP3 instead of TTS (recording or voice clone)")
     p.add_argument("--engine", default="", choices=["", "heygen", "cartoon"],
                    help="heygen = paid, professional; cartoon = free, local")
     p.add_argument("--aspect", default="9:16")
