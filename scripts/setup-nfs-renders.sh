@@ -12,7 +12,7 @@
 # Run this FROM pop-os. It drives quasimodo over ssh.
 #
 # What it sets up
-#   quasimodo  exports /app/portrender/data  to 192.168.0.9 ONLY
+#   quasimodo  exports /app/portrender/data  to 192.168.0.247 ONLY
 #   pop-os     mounts it at /mnt/quasimodo-renders, and fstab keeps it across reboots
 #
 # Why rw and not ro: the human-in-the-loop gate writes approvals into
@@ -24,8 +24,8 @@
 set -uo pipefail
 
 QUASI_HOST="${QUASI_HOST:-quasimodo}"
-QUASI_IP="${QUASI_IP:-192.168.0.20}"
-POPOS_IP="${POPOS_IP:-192.168.0.9}"
+QUASI_IP="${QUASI_IP:-192.168.0.28}"   # DHCP — verify before running
+POPOS_IP="${POPOS_IP:-192.168.0.247}"  # DHCP — verify before running
 EXPORT_DIR="${EXPORT_DIR:-/app/portrender/data}"
 MOUNT_POINT="${MOUNT_POINT:-/mnt/quasimodo-renders}"
 EXPORT_LINE="$EXPORT_DIR ${POPOS_IP}(rw,sync,no_subtree_check)"

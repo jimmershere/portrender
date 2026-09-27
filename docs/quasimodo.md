@@ -1,8 +1,14 @@
 # Running portrender on quasimodo
 
-quasimodo (192.168.0.20, user `jimbro`, `ssh quasimodo` / `quasimodo-lan` from pop-os)
+quasimodo (192.168.0.28, user `jimbro`, `ssh quasimodo` / `quasimodo-lan` from pop-os)
 is where the web UI should live so it is reachable from any machine on the LAN. pop-os
 runs no sshd, so everything is pushed *to* quasimodo, never pulled from pop-os.
+
+> **Every IP in this file is a DHCP lease, not a fixture.** Both hosts have already moved
+> once (quasimodo .20 -> .28, pop-os .9 -> .247, observed 2026-09-26), and the symptom is
+> a dead tunnel rather than a dead service. Prefer `ssh quasimodo` — the alias is pinned
+> in `~/.ssh/config`, so a new lease is one edit there. To find the host again by MAC:
+> `/app/poplab/local81/fleet-find.sh`. Verified .28 on 2026-09-27.
 
 > Unverified at authoring time (built in a sandbox without SSH to the fleet): quasimodo's
 > Python version, whether `systemctl --user` + linger are available, and whether outbound
@@ -74,7 +80,7 @@ scripts/install-user-service.sh --host 0.0.0.0 --port 3070
 systemctl --user status portrender
 ```
 
-Open **http://192.168.0.20:3070** from pop-os. If nothing answers, check ufw / firewalld on
+Open **http://192.168.0.28:3070** from pop-os. If nothing answers, check ufw / firewalld on
 quasimodo for ports 3070 (portrender) and 3053 (clemtock).
 
 ## 4. Update loop
@@ -102,5 +108,5 @@ rsync -az quasimodo:/app/portrender/data/renders/ /app/portrender/data/renders/
 Exports (`--to tee-empire|clemtock|au2`) are local file copies, so run them on the host that
 holds the target checkout. On quasimodo all three live under `/app` (`/app/tee-empire`,
 `/app/clemtock`, `/app/AU2`), which is the point of running portrender there. From pop-os,
-`--to clemtock` needs `CLEMTOCK_DIR` pointing at a local checkout and `CLEMTOCK_URL=http://192.168.0.20:3053`
+`--to clemtock` needs `CLEMTOCK_DIR` pointing at a local checkout and `CLEMTOCK_URL=http://192.168.0.28:3053`
 for the rescan poke; the plain file copy does not cross hosts.

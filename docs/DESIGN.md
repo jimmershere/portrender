@@ -81,7 +81,7 @@ exist, replace the table (or set `PORTRENDER_PRICE_JSON`) and the spend counter 
 
 - **pop-os**: git checkout, `portrender serve` on 127.0.0.1 for local work.
 - **quasimodo**: `local81 deploy --scope portrender` target; `serve --host 0.0.0.0` (or the
-  systemd user unit) → http://192.168.0.20:3070 from pop-os. See `quasimodo.md`.
+  systemd user unit) → http://192.168.0.28:3070 from pop-os. See `quasimodo.md`.
 - No GPU, no local model. Any box with Python 3.11+ and outbound HTTPS to api.openai.com works.
 
 ## Integration contracts

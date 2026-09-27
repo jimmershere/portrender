@@ -12,7 +12,7 @@ before any of this ran.
 | `scripts/smoke.sh` | `smoke: OK` (no-network end-to-end) |
 | OpenAI key | `doctor --probe` → `{"ok": true}`; `GET /v1/models` → 200 |
 | portrender on pop-os | `http://127.0.0.1:3070` — `scripts/serve.sh start/stop/status` |
-| portrender on quasimodo | `http://192.168.0.20:3070` — systemd **user** unit, `linger=yes`, enabled at boot |
+| portrender on quasimodo | `http://192.168.0.28:3070` — systemd **user** unit, `linger=yes`, enabled at boot |
 | local81 deploy | `local81/portrender-deploy.yml`, lint-clean, applied 2026-09-23 |
 | Printify | token live; shop `27415408` = *EarlBiggersDammit* (etsy channel), 113 products, 2646 blueprints readable |
 | Etsy app auth | keystring + shared secret valid; `openapi-ping` → `{"application_id":1518422772535}` |

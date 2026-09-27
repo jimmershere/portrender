@@ -31,7 +31,10 @@ name: portrender-deploy
 description: Mirror portrender and clemtock from pop-os to quasimodo and report service health.
 hosts:
   - name: quasimodo
-    address: "{{ QUASI_HOST | default('192.168.0.20') }}"
+    # The SSH ALIAS, not a literal IP. Both hosts are DHCP and both have already
+    # moved once (CLAUDE.md); ~/.ssh/config pins the current lease in one place and
+    # local81 passes no -F, so the alias resolves. Override with QUASI_HOST if needed.
+    address: "{{ QUASI_HOST | default('quasimodo') }}"
     user: "{{ QUASI_USER | default('jimbro') }}"
 vars:
   portrender_dir: "/app/portrender"
